@@ -5,6 +5,13 @@ import datetime
 from collections import Counter
 
 cube = [[[-1 for _ in range(3)] for _ in range(3)] for _ in range(6)]
+limits = [[[0, 90, 2], [7, 255, 255]],
+          [[170, 90, 2], [255, 255, 255]],
+          [[70, 60, 2], [95, 255, 255]],
+          [[95, 90, 2], [120, 255, 255]],
+          [[7, 90, 2], [20, 255, 255]],
+          [[20, 90, 2], [30, 255, 255]],
+          [[0, 0, 100], [255, 90, 255]]]
 middle = [int(0), int(0)]
 gap = 100
 targets = [[middle[0] - gap, middle[1] - gap, -1],
@@ -85,39 +92,134 @@ def take_photos():
             is_accepted = True
 
 def test_photos():
-    print("Testing photos...")
+    import os  # import os module
+
+    directory = 'photos'
+
+    for frame in os.scandir(directory):
+        if frame.is_file():
+            img = cv2.imread(frame)
+            middle = [int(img.shape[1] / 2), int(img.shape[0] / 2)]
+            gap = 100
+
+            hsv_frame = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+            red_lower = np.array([limits[0][0][0], limits[0][0][1], limits[0][0][2]], np.uint8)
+            red_upper = np.array([limits[0][1][0], limits[0][1][1], limits[0][1][2]], np.uint8)
+            red_mask = cv2.inRange(hsv_frame, red_lower, red_upper)
+
+            red_lower = np.array([limits[1][0][0], limits[1][0][1], limits[1][0][2]], np.uint8)
+            red_upper = np.array([limits[1][1][0], limits[1][1][1], limits[1][1][2]], np.uint8)
+            red_mask_2 = cv2.inRange(hsv_frame, red_lower, red_upper)
+
+            green_lower = np.array([limits[2][0][0], limits[2][0][1], limits[2][0][2]], np.uint8)
+            green_upper = np.array([limits[2][1][0], limits[2][1][1], limits[2][1][2]], np.uint8)
+            green_mask = cv2.inRange(hsv_frame, green_lower, green_upper)
+
+            blue_lower = np.array([limits[3][0][0], limits[3][0][1], limits[3][0][2]], np.uint8)
+            blue_upper = np.array([limits[3][1][0], limits[3][1][1], limits[3][1][2]], np.uint8)
+            blue_mask = cv2.inRange(hsv_frame, blue_lower, blue_upper)
+
+            orange_lower = np.array([limits[4][0][0], limits[4][0][1], limits[4][0][2]], np.uint8)
+            orange_upper = np.array([limits[4][1][0], limits[4][1][1], limits[4][1][2]], np.uint8)
+            orange_mask = cv2.inRange(hsv_frame, orange_lower, orange_upper)
+
+            yellow_lower = np.array([limits[5][0][0], limits[5][0][1], limits[5][0][2]], np.uint8)
+            yellow_upper = np.array([limits[5][1][0], limits[5][1][1], limits[5][1][2]], np.uint8)
+            yellow_mask = cv2.inRange(hsv_frame, yellow_lower, yellow_upper)
+
+            white_lower = np.array([limits[6][0][0], limits[6][0][1], limits[6][0][2]], np.uint8)
+            white_upper = np.array([limits[6][1][0], limits[6][1][1], limits[6][1][2]], np.uint8)
+            white_mask = cv2.inRange(hsv_frame, white_lower, white_upper)
+
+            targets = [[middle[0] - gap, middle[1] - gap, -1],
+                       [middle[0], middle[1] - gap, -1],
+                       [middle[0] + gap, middle[1] - gap, -1],
+                       [middle[0] - gap, middle[1], -1],
+                       [middle[0], middle[1], -1],
+                       [middle[0] + gap, middle[1], -1],
+                       [middle[0] - gap, middle[1] + gap, -1],
+                       [middle[0], middle[1] + gap, -1],
+                       [middle[0] + gap, middle[1] + gap, -1]]
+
+            for target in targets:
+                scale_up = 2
+                img = cv2.circle(img, [target[0], target[1]], 10, (0, 0, 0), 8)
+
+                x_start, y_start, x_end, y_end = target[0] - int(gap), target[1] - int(gap), target[0] + int(gap), target[1] + int(gap)
+                print(x_start, y_start, x_end, y_end)
+                cropped_img = img[y_start:y_end, x_start:x_end]
+
+                cropped_img = cv2.resize(cropped_img, None, fx=scale_up, fy=scale_up, interpolation=cv2.INTER_LINEAR)
+
+                cv2.imshow("Cropped Image", cropped_img)
+
+                key = cv2.waitKey(0) & 0xFF
+
+                if key == ord('w'):
+                    if white_mask[target[1], target[0]] > 0:
+                        print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                    else:
+                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                elif key == ord('b'):
+                    if blue_mask[target[1], target[0]] > 0:
+                        print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                    else:
+                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                elif key == ord('r'):
+                    if red_mask[target[1], target[0]] > 0 or red_mask_2[target[1], target[0]] > 0:
+                        print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                    else:
+                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                elif key == ord('y'):
+                    if yellow_mask[target[1], target[0]] > 0:
+                        print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                    else:
+                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                elif key == ord('g'):
+                    if green_mask[target[1], target[0]] > 0:
+                        print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                    else:
+                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                elif key == ord('o'):
+                    if orange_mask[target[1], target[0]] > 0:
+                        print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                    else:
+                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+
+                cv2.destroyAllWindows()
 
 def read_colors(image_frame):
     global targets, is_recognized
 
     hsv_frame = cv2.cvtColor(image_frame, cv2.COLOR_BGR2HSV)
 
-    red_lower = np.array([0, 90, 2], np.uint8)
-    red_upper = np.array([7, 255, 255], np.uint8)
+    red_lower = np.array([limits[0][0][0], limits[0][0][1], limits[0][0][2]], np.uint8)
+    red_upper = np.array([limits[0][1][0], limits[0][1][1], limits[0][1][2]], np.uint8)
     red_mask = cv2.inRange(hsv_frame, red_lower, red_upper)
 
-    red_lower = np.array([170, 90, 2], np.uint8)
-    red_upper = np.array([255, 255, 255], np.uint8)
+    red_lower = np.array([limits[1][0][0], limits[1][0][1], limits[1][0][2]], np.uint8)
+    red_upper = np.array([limits[1][1][0], limits[1][1][1], limits[1][1][2]], np.uint8)
     red_mask_2 = cv2.inRange(hsv_frame, red_lower, red_upper)
 
-    green_lower = np.array([70, 60, 2], np.uint8)
-    green_upper = np.array([95, 255, 255], np.uint8)
+    green_lower = np.array([limits[2][0][0], limits[2][0][1], limits[2][0][2]], np.uint8)
+    green_upper = np.array([limits[2][1][0], limits[2][1][1], limits[2][1][2]], np.uint8)
     green_mask = cv2.inRange(hsv_frame, green_lower, green_upper)
 
-    blue_lower = np.array([95, 90, 2], np.uint8)
-    blue_upper = np.array([120, 255, 255], np.uint8)
+    blue_lower = np.array([limits[3][0][0], limits[3][0][1], limits[3][0][2]], np.uint8)
+    blue_upper = np.array([limits[3][1][0], limits[3][1][1], limits[3][1][2]], np.uint8)
     blue_mask = cv2.inRange(hsv_frame, blue_lower, blue_upper)
 
-    orange_lower = np.array([7, 90, 2], np.uint8)
-    orange_upper = np.array([20, 255, 255], np.uint8)
+    orange_lower = np.array([limits[4][0][0], limits[4][0][1], limits[4][0][2]], np.uint8)
+    orange_upper = np.array([limits[4][1][0], limits[4][1][1], limits[4][1][2]], np.uint8)
     orange_mask = cv2.inRange(hsv_frame, orange_lower, orange_upper)
 
-    yellow_lower = np.array([20, 90, 2], np.uint8)
-    yellow_upper = np.array([30, 255, 255], np.uint8)
+    yellow_lower = np.array([limits[5][0][0], limits[5][0][1], limits[5][0][2]], np.uint8)
+    yellow_upper = np.array([limits[5][1][0], limits[5][1][1], limits[5][1][2]], np.uint8)
     yellow_mask = cv2.inRange(hsv_frame, yellow_lower, yellow_upper)
 
-    white_lower = np.array([0, 0, 100], np.uint8)
-    white_upper = np.array([255, 90, 255], np.uint8)
+    white_lower = np.array([limits[6][0][0], limits[6][0][1], limits[6][0][2]], np.uint8)
+    white_upper = np.array([limits[6][1][0], limits[6][1][1], limits[6][1][2]], np.uint8)
     white_mask = cv2.inRange(hsv_frame, white_lower, white_upper)
 
     #print(hsv_frame[targets[4][1], targets[4][0]])
