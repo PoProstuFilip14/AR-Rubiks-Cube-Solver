@@ -2,16 +2,28 @@ import numpy as np
 import cv2
 import kociemba
 import datetime
+import csv
 from collections import Counter
 
+results = [[[[] for _ in range(2)]] for _ in range(6)]
+stats = [
+    ['Kolor', 'Correct', 'Wrong', 'All', 'Highest_H', 'Highest_S','Highest_V', 'Lowest_H', 'Lowest_S', 'Lowest_V'],
+    ['White', 0, 0, 0, -1, -1, -1, 256, 256, 256],
+    ['Blue', 0, 0, 0, -1, -1, -1, 256, 256, 256],
+    ['Red', 0, 0, 0, -1, -1, -1, 256, 256, 256],
+    ['Yellow', 0, 0, 0, -1, -1, -1, 256, 256, 256],
+    ['Green', 0, 0, 0, -1, -1, -1, 256, 256, 256],
+    ['Orange', 0, 0, 0, -1, -1, -1, 256, 256, 256]
+]
 cube = [[[-1 for _ in range(3)] for _ in range(3)] for _ in range(6)]
-limits = [[[0, 90, 2], [7, 255, 255]],
-          [[170, 90, 2], [255, 255, 255]],
-          [[70, 60, 2], [95, 255, 255]],
-          [[95, 90, 2], [120, 255, 255]],
-          [[7, 90, 2], [20, 255, 255]],
-          [[20, 90, 2], [30, 255, 255]],
-          [[0, 0, 100], [255, 90, 255]]]
+limits = [[[0, 27, 17], [5, 225, 255]],
+          [[114, 27, 17], [255, 225, 255]],
+          [[30, 25, 14], [96, 255, 196]],
+          [[106, 122, 25], [118, 255, 226]],
+          [[0, 32, 35], [15, 255, 255]],
+          [[21, 7, 37], [103, 255, 255]],
+          [[0, 0, 16], [174, 145, 255]],
+          [[125, 32, 35], [255, 225, 255]]]
 middle = [int(0), int(0)]
 gap = 100
 targets = [[middle[0] - gap, middle[1] - gap, -1],
@@ -80,6 +92,7 @@ def take_photos():
 
         else:
             print("Failed to capture image.")
+            break
 
         key = cv2.waitKey(1) & 0xFF
 
@@ -94,7 +107,7 @@ def take_photos():
 def test_photos():
     import os  # import os module
 
-    directory = 'photos'
+    directory = 'temp_photos'
 
     for frame in os.scandir(directory):
         if frame.is_file():
@@ -132,6 +145,10 @@ def test_photos():
             white_upper = np.array([limits[6][1][0], limits[6][1][1], limits[6][1][2]], np.uint8)
             white_mask = cv2.inRange(hsv_frame, white_lower, white_upper)
 
+            orange_lower = np.array([limits[7][0][0], limits[7][0][1], limits[7][0][2]], np.uint8)
+            orange_upper = np.array([limits[7][1][0], limits[7][1][1], limits[7][1][2]], np.uint8)
+            orange_mask_2 = cv2.inRange(hsv_frame, orange_lower, orange_upper)
+
             targets = [[middle[0] - gap, middle[1] - gap, -1],
                        [middle[0], middle[1] - gap, -1],
                        [middle[0] + gap, middle[1] - gap, -1],
@@ -157,37 +174,147 @@ def test_photos():
                 key = cv2.waitKey(0) & 0xFF
 
                 if key == ord('w'):
+                    stats[1][3] += 1
+                    if hsv_frame[target[1], target[0]][0] > stats[1][4]:
+                        stats[1][4] = hsv_frame[target[1], target[0]][0]
+                    if hsv_frame[target[1], target[0]][1] > stats[1][5]:
+                        stats[1][5] = hsv_frame[target[1], target[0]][1]
+                    if hsv_frame[target[1], target[0]][2] > stats[1][6]:
+                        stats[1][6] = hsv_frame[target[1], target[0]][2]
+                    if hsv_frame[target[1], target[0]][0] < stats[1][7]:
+                        stats[1][7] = hsv_frame[target[1], target[0]][0]
+                    if hsv_frame[target[1], target[0]][1] < stats[1][8]:
+                        stats[1][8] = hsv_frame[target[1], target[0]][1]
+                    if hsv_frame[target[1], target[0]][2] < stats[1][9]:
+                        stats[1][9] = hsv_frame[target[1], target[0]][2]
                     if white_mask[target[1], target[0]] > 0:
                         print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                        results[0].append([True, hsv_frame[target[1], target[0]]])
+                        stats[1][1] += 1
                     else:
                         print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                        results[0].append([False, hsv_frame[target[1], target[0]]])
+                        stats[1][2] += 1
                 elif key == ord('b'):
+                    if hsv_frame[target[1], target[0]][0] > stats[2][4]:
+                        stats[2][4] = hsv_frame[target[1], target[0]][0]
+                    if hsv_frame[target[1], target[0]][1] > stats[2][5]:
+                        stats[2][5] = hsv_frame[target[1], target[0]][1]
+                    if hsv_frame[target[1], target[0]][2] > stats[2][6]:
+                        stats[2][6] = hsv_frame[target[1], target[0]][2]
+                    if hsv_frame[target[1], target[0]][0] < stats[2][7]:
+                        stats[2][7] = hsv_frame[target[1], target[0]][0]
+                    if hsv_frame[target[1], target[0]][1] < stats[2][8]:
+                        stats[2][8] = hsv_frame[target[1], target[0]][1]
+                    if hsv_frame[target[1], target[0]][2] < stats[2][9]:
+                        stats[2][9] = hsv_frame[target[1], target[0]][2]
+                    stats[2][3] += 1
                     if blue_mask[target[1], target[0]] > 0:
                         print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                        results[1].append([True, hsv_frame[target[1], target[0]]])
+                        stats[2][1] += 1
                     else:
                         print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                        results[1].append([False, hsv_frame[target[1], target[0]]])
+                        stats[2][2] += 1
                 elif key == ord('r'):
+                    if hsv_frame[target[1], target[0]][0] > stats[3][4]:
+                        stats[3][4] = hsv_frame[target[1], target[0]][0]
+                    if hsv_frame[target[1], target[0]][1] > stats[3][5]:
+                        stats[3][5] = hsv_frame[target[1], target[0]][1]
+                    if hsv_frame[target[1], target[0]][2] > stats[3][6]:
+                        stats[3][6] = hsv_frame[target[1], target[0]][2]
+                    if hsv_frame[target[1], target[0]][0] < stats[3][7]:
+                        stats[3][7] = hsv_frame[target[1], target[0]][0]
+                    if hsv_frame[target[1], target[0]][1] < stats[3][8]:
+                        stats[3][8] = hsv_frame[target[1], target[0]][1]
+                    if hsv_frame[target[1], target[0]][2] < stats[3][9]:
+                        stats[3][9] = hsv_frame[target[1], target[0]][2]
+                    stats[3][3] += 1
                     if red_mask[target[1], target[0]] > 0 or red_mask_2[target[1], target[0]] > 0:
                         print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                        results[2].append([True, hsv_frame[target[1], target[0]]])
+                        stats[3][1] += 1
                     else:
                         print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                        results[2].append([False, hsv_frame[target[1], target[0]]])
+                        stats[3][2] += 1
                 elif key == ord('y'):
+                    if hsv_frame[target[1], target[0]][0] > stats[4][4]:
+                        stats[4][4] = hsv_frame[target[1], target[0]][0]
+                    if hsv_frame[target[1], target[0]][1] > stats[4][5]:
+                        stats[4][5] = hsv_frame[target[1], target[0]][1]
+                    if hsv_frame[target[1], target[0]][2] > stats[4][6]:
+                        stats[4][6] = hsv_frame[target[1], target[0]][2]
+                    if hsv_frame[target[1], target[0]][0] < stats[4][7]:
+                        stats[4][7] = hsv_frame[target[1], target[0]][0]
+                    if hsv_frame[target[1], target[0]][1] < stats[4][8]:
+                        stats[4][8] = hsv_frame[target[1], target[0]][1]
+                    if hsv_frame[target[1], target[0]][2] < stats[4][9]:
+                        stats[4][9] = hsv_frame[target[1], target[0]][2]
+                    stats[4][3] += 1
                     if yellow_mask[target[1], target[0]] > 0:
                         print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                        results[3].append([True, hsv_frame[target[1], target[0]]])
+                        stats[4][1] += 1
                     else:
                         print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                        results[3].append([False, hsv_frame[target[1], target[0]]])
+                        stats[4][2] += 1
                 elif key == ord('g'):
+                    if hsv_frame[target[1], target[0]][0] > stats[5][4]:
+                        stats[5][4] = hsv_frame[target[1], target[0]][0]
+                    if hsv_frame[target[1], target[0]][1] > stats[5][5]:
+                        stats[5][5] = hsv_frame[target[1], target[0]][1]
+                    if hsv_frame[target[1], target[0]][2] > stats[5][6]:
+                        stats[5][6] = hsv_frame[target[1], target[0]][2]
+                    if hsv_frame[target[1], target[0]][0] < stats[5][7]:
+                        stats[5][7] = hsv_frame[target[1], target[0]][0]
+                    if hsv_frame[target[1], target[0]][1] < stats[5][8]:
+                        stats[5][8] = hsv_frame[target[1], target[0]][1]
+                    if hsv_frame[target[1], target[0]][2] < stats[5][9]:
+                        stats[5][9] = hsv_frame[target[1], target[0]][2]
+                    stats[5][3] += 1
                     if green_mask[target[1], target[0]] > 0:
                         print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                        results[4].append([True, hsv_frame[target[1], target[0]]])
+                        stats[5][1] += 1
                     else:
                         print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                        results[4].append([False, hsv_frame[target[1], target[0]]])
+                        stats[5][2] += 1
                 elif key == ord('o'):
-                    if orange_mask[target[1], target[0]] > 0:
+                    if hsv_frame[target[1], target[0]][0] > stats[6][4]:
+                        stats[6][4] = hsv_frame[target[1], target[0]][0]
+                    if hsv_frame[target[1], target[0]][1] > stats[6][5]:
+                        stats[6][5] = hsv_frame[target[1], target[0]][1]
+                    if hsv_frame[target[1], target[0]][2] > stats[6][6]:
+                        stats[6][6] = hsv_frame[target[1], target[0]][2]
+                    if hsv_frame[target[1], target[0]][0] < stats[6][7]:
+                        stats[6][7] = hsv_frame[target[1], target[0]][0]
+                    if hsv_frame[target[1], target[0]][1] < stats[6][8]:
+                        stats[6][8] = hsv_frame[target[1], target[0]][1]
+                    if hsv_frame[target[1], target[0]][2] < stats[6][9]:
+                        stats[6][9] = hsv_frame[target[1], target[0]][2]
+                    stats[6][3] += 1
+                    if orange_mask[target[1], target[0]] > 0 or orange_mask[target[1], target[0]] > 0:
                         print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                        results[5].append([True, hsv_frame[target[1], target[0]]])
+                        stats[6][1] += 1
                     else:
                         print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
+                        results[5].append([False, hsv_frame[target[1], target[0]]])
+                        stats[6][2] += 1
 
                 cv2.destroyAllWindows()
+
+    filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    with open(f"results/{filename}_results.csv", 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerows(results)
+    with open(f"stats/{filename}_stats.csv", 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerows(stats)
 
 def read_colors(image_frame):
     global targets, is_recognized
@@ -221,6 +348,10 @@ def read_colors(image_frame):
     white_lower = np.array([limits[6][0][0], limits[6][0][1], limits[6][0][2]], np.uint8)
     white_upper = np.array([limits[6][1][0], limits[6][1][1], limits[6][1][2]], np.uint8)
     white_mask = cv2.inRange(hsv_frame, white_lower, white_upper)
+
+    orange_lower = np.array([limits[7][0][0], limits[7][0][1], limits[7][0][2]], np.uint8)
+    orange_upper = np.array([limits[7][1][0], limits[7][1][1], limits[7][1][2]], np.uint8)
+    orange_mask_2 = cv2.inRange(hsv_frame, orange_lower, orange_upper)
 
     #print(hsv_frame[targets[4][1], targets[4][0]])
 

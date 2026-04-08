@@ -1,0 +1,7 @@
+Kolor,Correct,Wrong,All,Highest_H,Highest_S,Highest_V,Lowest_H,Lowest_S,Lowest_V
+White,193,17,210,174,131,255,0,0,16
+Blue,113,7,120,117,255,213,108,132,25
+Red,98,52,150,179,239,255,0,27,19
+Yellow,126,24,150,103,218,255,23,7,37
+Green,89,1,90,83,198,154,30,50,18
+Orange,70,20,90,179,203,250,0,35,36
