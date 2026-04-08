@@ -19,13 +19,13 @@ stats = [
 ]
 color_groups = [[0 for _ in range(7)] for _ in range(60)]
 cube = [[[-1 for _ in range(3)] for _ in range(3)] for _ in range(6)]
-limits = [[[0, 27, 17], [5, 225, 255]],
+limits = [[[0, 27, 17], [4, 225, 255]],
           [[165, 27, 17], [179, 225, 255]],
-          [[39, 20, 14], [95, 255, 255]],
+          [[48, 20, 14], [98, 255, 255]],
           [[99, 50, 12], [119, 255, 225]],
-          [[6, 32, 35], [15, 255, 255]],
-          [[16, 7, 37], [26, 255, 255]],
-          [[0, 0, 100], [255, 90, 255]],
+          [[5, 32, 35], [14, 255, 255]],
+          [[15, 7, 37], [29, 255, 255]],
+          [[0, 0, 100], [255, 40, 255]],
           [[6, 32, 35], [15, 225, 255]]]
 middle = [int(0), int(0)]
 gap = 100
@@ -181,7 +181,9 @@ def test_photos():
                 
                 detected_color = 'n'
 
-                if red_mask[target[1], target[0]] > 0 or red_mask_2[target[1], target[0]] > 0:
+                if white_mask[target[1], target[0]] > 0:
+                    detected_color = 'w'
+                elif red_mask[target[1], target[0]] > 0 or red_mask_2[target[1], target[0]] > 0:
                     detected_color = 'r'
                 elif green_mask[target[1], target[0]] > 0:
                     detected_color = 'g'
@@ -191,8 +193,6 @@ def test_photos():
                     detected_color = 'o'
                 elif yellow_mask[target[1], target[0]] > 0:
                     detected_color = 'y'
-                elif white_mask[target[1], target[0]] > 0:
-                    detected_color = 'w'
                 #print(f"counter={counter}, cell={cell_counter}, row={row_counter}, wall={wall_counter}")
                 counter += 1
                 if wall_counter == 0:
@@ -460,7 +460,10 @@ def read_colors(image_frame):
     #print(hsv_frame[targets[4][1], targets[4][0]])
 
     for target in targets:
-        if red_mask[target[1], target[0]] > 0 or red_mask_2[target[1], target[0]] > 0:
+        if white_mask[target[1], target[0]] > 0:
+            image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (255, 255, 255), 8)
+            target[2] = 0
+        elif red_mask[target[1], target[0]] > 0 or red_mask_2[target[1], target[0]] > 0:
             image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 0, 255), 8)
             target[2] = 2
         elif green_mask[target[1], target[0]] > 0:
@@ -475,12 +478,17 @@ def read_colors(image_frame):
         elif yellow_mask[target[1], target[0]] > 0:
             image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 255, 255), 8)
             target[2] = 3
-        elif white_mask[target[1], target[0]] > 0:
-            image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (255, 255, 255), 8)
-            target[2] = 0
         else:
             image_frame = cv2.circle(image_frame, [target[0], target[1]], 10, (0, 0, 0), 8)
             is_recognized = False
+
+def is_same(last_wall):
+    i = 0
+    while i < 9:
+        if not targets[i][2] == last_wall[i][2]:
+            return False
+        i += 1
+    return True
 
 def generate_solution():
     global cube
@@ -508,16 +516,16 @@ def generate_solution():
 
     try:
         cube_solution = kociemba.solve(cube_string)
+        print(cube_solution)
     except:
-        cube_solution = "Invalid cube!!!"
-
-    print(cube_solution)
+        print("Invalid cube!!!")
 
 def cube_solver():
     global cube, middle, gap, targets, is_recognized
 
     counter = 0
     is_saved = [False] * 6
+    last_wall = None
     wall_counter = 0
 
     webcam = cv2.VideoCapture(0)
@@ -541,16 +549,18 @@ def cube_solver():
 
             read_colors(image_frame)
 
+            last_wall = targets
+
             image_frame = cv2.flip(image_frame, 1)
 
             cv2.imshow("Color Detection", image_frame)
 
-            if is_recognized and not is_saved[targets[4][2]]:
+            if is_recognized and not is_saved[targets[4][2]] and is_same(last_wall):
                 counter += 1
             else:
                 counter = 0
 
-            if counter == 25:
+            if counter == 50:
                 #print(targets[0][2], targets[1][2], targets[2][2])
                 #print(targets[3][2], targets[4][2], targets[5][2])
                 #print(targets[6][2], targets[7][2], targets[8][2])
@@ -578,6 +588,8 @@ def cube_solver():
             break
 
     generate_solution()
+    webcam.release()
+    cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main()
