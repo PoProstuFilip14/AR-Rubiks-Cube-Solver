@@ -520,6 +520,44 @@ def generate_solution():
     except:
         print("Invalid cube!!!")
 
+def square_finder(image_frame):
+    img_hsv = cv2.cvtColor(image_frame, cv2.COLOR_BGR2HSV)
+
+    l_h = cv2.getTrackbarPos("L-H", "Trackbars")
+    l_s = cv2.getTrackbarPos("L-S", "Trackbars")
+    l_v = cv2.getTrackbarPos("L-V", "Trackbars")
+    h_h = cv2.getTrackbarPos("H-H", "Trackbars")
+    h_s = cv2.getTrackbarPos("H-S", "Trackbars")
+    h_v = cv2.getTrackbarPos("H-V", "Trackbars")
+
+    lower = np.array([l_h, l_s, l_v])
+    upper = np.array([h_h, h_s, h_v])
+    mask = cv2.inRange(img_hsv, lower, upper)
+
+    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if area < 2000:
+            continue
+
+        rect = cv2.minAreaRect(contour)
+        (w, h) = rect[1]
+
+        if w == 0 or h == 0:
+            continue
+
+        aspectRatio = max(w, h) / min(w, h)
+
+        if aspectRatio < 1.3:
+            box = cv2.boxPoints(rect)
+            box = box.astype(int)
+            cv2.drawContours(image_frame, [box], 0, (0, 255, 0), 2)
+
+
+def nothing(x):
+    pass
+
 def cube_solver():
     global cube, middle, gap, targets, is_recognized
 
@@ -530,9 +568,19 @@ def cube_solver():
 
     webcam = cv2.VideoCapture(0)
 
+    cv2.namedWindow("Trackbars")
+    cv2.createTrackbar("L-H", "Trackbars", 0, 179, nothing)
+    cv2.createTrackbar("L-S", "Trackbars", 0, 255, nothing)
+    cv2.createTrackbar("L-V", "Trackbars", 0, 255, nothing)
+    cv2.createTrackbar("H-H", "Trackbars", 179, 179, nothing)
+    cv2.createTrackbar("H-S", "Trackbars", 255, 255, nothing)
+    cv2.createTrackbar("H-V", "Trackbars", 115, 255, nothing)
+
     while wall_counter < 6:
         ret, image_frame = webcam.read()
         if ret:
+            square_finder(image_frame)
+
             middle = [int(image_frame.shape[1] / 2), int(image_frame.shape[0] / 2)]
             gap = 100
 
@@ -576,8 +624,6 @@ def cube_solver():
                 cube[targets[4][2]][2][2] = targets[8][2]
                 wall_counter += 1
                 print("Wall " + str(wall_counter) + " saved!!!")
-
-            cv2.imshow("Color Detection", image_frame)
 
         else:
             print("Image reading error!!!")
