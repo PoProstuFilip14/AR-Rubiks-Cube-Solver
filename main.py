@@ -4,6 +4,7 @@ import cv2
 import kociemba
 import datetime
 import csv
+import os
 from collections import Counter
 
 results = [[[[] for _ in range(2)]] for _ in range(6)]
@@ -19,13 +20,13 @@ stats = [
 ]
 color_groups = [[0 for _ in range(7)] for _ in range(60)]
 cube = [[[-1 for _ in range(3)] for _ in range(3)] for _ in range(6)]
-limits = [[[0, 27, 17], [4, 225, 255]],
+limits = [[[0, 27, 17], [5, 225, 255]],
           [[165, 27, 17], [179, 225, 255]],
-          [[48, 20, 14], [98, 255, 255]],
-          [[99, 50, 12], [119, 255, 225]],
-          [[5, 32, 35], [14, 255, 255]],
+          [[69, 20, 14], [92, 255, 255]],
+          [[99, 50, 12], [116, 255, 225]],
+          [[6, 32, 35], [14, 255, 255]],
           [[15, 7, 37], [29, 255, 255]],
-          [[0, 0, 100], [255, 40, 255]],
+          [[90, 0, 115], [170, 100, 255]],
           [[6, 32, 35], [15, 225, 255]]]
 middle = [int(0), int(0)]
 gap = 100
@@ -108,7 +109,7 @@ def take_photos():
             is_accepted = True
 
 def test_photos():
-    import os  # import os module
+    global targets
 
     directory = 'temp_photos'
 
@@ -126,38 +127,6 @@ def test_photos():
 
             hsv_frame = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-            red_lower = np.array([limits[0][0][0], limits[0][0][1], limits[0][0][2]], np.uint8)
-            red_upper = np.array([limits[0][1][0], limits[0][1][1], limits[0][1][2]], np.uint8)
-            red_mask = cv2.inRange(hsv_frame, red_lower, red_upper)
-
-            red_lower = np.array([limits[1][0][0], limits[1][0][1], limits[1][0][2]], np.uint8)
-            red_upper = np.array([limits[1][1][0], limits[1][1][1], limits[1][1][2]], np.uint8)
-            red_mask_2 = cv2.inRange(hsv_frame, red_lower, red_upper)
-
-            green_lower = np.array([limits[2][0][0], limits[2][0][1], limits[2][0][2]], np.uint8)
-            green_upper = np.array([limits[2][1][0], limits[2][1][1], limits[2][1][2]], np.uint8)
-            green_mask = cv2.inRange(hsv_frame, green_lower, green_upper)
-
-            blue_lower = np.array([limits[3][0][0], limits[3][0][1], limits[3][0][2]], np.uint8)
-            blue_upper = np.array([limits[3][1][0], limits[3][1][1], limits[3][1][2]], np.uint8)
-            blue_mask = cv2.inRange(hsv_frame, blue_lower, blue_upper)
-
-            orange_lower = np.array([limits[4][0][0], limits[4][0][1], limits[4][0][2]], np.uint8)
-            orange_upper = np.array([limits[4][1][0], limits[4][1][1], limits[4][1][2]], np.uint8)
-            orange_mask = cv2.inRange(hsv_frame, orange_lower, orange_upper)
-
-            yellow_lower = np.array([limits[5][0][0], limits[5][0][1], limits[5][0][2]], np.uint8)
-            yellow_upper = np.array([limits[5][1][0], limits[5][1][1], limits[5][1][2]], np.uint8)
-            yellow_mask = cv2.inRange(hsv_frame, yellow_lower, yellow_upper)
-
-            white_lower = np.array([limits[6][0][0], limits[6][0][1], limits[6][0][2]], np.uint8)
-            white_upper = np.array([limits[6][1][0], limits[6][1][1], limits[6][1][2]], np.uint8)
-            white_mask = cv2.inRange(hsv_frame, white_lower, white_upper)
-
-            orange_lower = np.array([limits[7][0][0], limits[7][0][1], limits[7][0][2]], np.uint8)
-            orange_upper = np.array([limits[7][1][0], limits[7][1][1], limits[7][1][2]], np.uint8)
-            orange_mask_2 = cv2.inRange(hsv_frame, orange_lower, orange_upper)
-
             targets = [[middle[0] - gap, middle[1] - gap, -1],
                        [middle[0], middle[1] - gap, -1],
                        [middle[0] + gap, middle[1] - gap, -1],
@@ -168,9 +137,35 @@ def test_photos():
                        [middle[0], middle[1] + gap, -1],
                        [middle[0] + gap, middle[1] + gap, -1]]
 
+            squares = square_finder(img, False)
+            print(len(squares))
+
+            red_lower = np.array([limits[0][0][0], limits[0][0][1], limits[0][0][2]], np.uint8)
+            red_upper = np.array([limits[0][1][0], limits[0][1][1], limits[0][1][2]], np.uint8)
+
+            red_lower_2 = np.array([limits[1][0][0], limits[1][0][1], limits[1][0][2]], np.uint8)
+            red_upper_2 = np.array([limits[1][1][0], limits[1][1][1], limits[1][1][2]], np.uint8)
+
+            green_lower = np.array([limits[2][0][0], limits[2][0][1], limits[2][0][2]], np.uint8)
+            green_upper = np.array([limits[2][1][0], limits[2][1][1], limits[2][1][2]], np.uint8)
+
+            blue_lower = np.array([limits[3][0][0], limits[3][0][1], limits[3][0][2]], np.uint8)
+            blue_upper = np.array([limits[3][1][0], limits[3][1][1], limits[3][1][2]], np.uint8)
+
+            orange_lower = np.array([limits[4][0][0], limits[4][0][1], limits[4][0][2]], np.uint8)
+            orange_upper = np.array([limits[4][1][0], limits[4][1][1], limits[4][1][2]], np.uint8)
+
+            yellow_lower = np.array([limits[5][0][0], limits[5][0][1], limits[5][0][2]], np.uint8)
+            yellow_upper = np.array([limits[5][1][0], limits[5][1][1], limits[5][1][2]], np.uint8)
+
+            white_lower = np.array([limits[6][0][0], limits[6][0][1], limits[6][0][2]], np.uint8)
+            white_upper = np.array([limits[6][1][0], limits[6][1][1], limits[6][1][2]], np.uint8)
+
+            orange_lower_2 = np.array([limits[7][0][0], limits[7][0][1], limits[7][0][2]], np.uint8)
+            orange_upper_2 = np.array([limits[7][1][0], limits[7][1][1], limits[7][1][2]], np.uint8)
+
             for target in targets:
                 scale_up = 2
-                img = cv2.circle(img, [target[0], target[1]], 10, (0, 0, 0), 8)
 
                 x_start, y_start, x_end, y_end = target[0] - int(gap), target[1] - int(gap), target[0] + int(gap), target[1] + int(gap)
                 cropped_img = img[y_start:y_end, x_start:x_end]
@@ -181,20 +176,8 @@ def test_photos():
                 
                 detected_color = 'n'
 
-                if white_mask[target[1], target[0]] > 0:
-                    detected_color = 'w'
-                elif red_mask[target[1], target[0]] > 0 or red_mask_2[target[1], target[0]] > 0:
-                    detected_color = 'r'
-                elif green_mask[target[1], target[0]] > 0:
-                    detected_color = 'g'
-                elif blue_mask[target[1], target[0]] > 0:
-                    detected_color = 'b'
-                elif orange_mask[target[1], target[0]] > 0 or orange_mask_2[target[1], target[0]] > 0:
-                    detected_color = 'o'
-                elif yellow_mask[target[1], target[0]] > 0:
-                    detected_color = 'y'
-                #print(f"counter={counter}, cell={cell_counter}, row={row_counter}, wall={wall_counter}")
                 counter += 1
+
                 if wall_counter == 0:
                     if cell_counter == 0:
                         key = cv2.waitKey(0) & 0xFF
@@ -220,194 +203,258 @@ def test_photos():
                         wall_counter = wall_counter + 1
                     if wall_counter == 10:
                         wall_counter = 0
+                is_square = False
+                for square in squares:
+                    x, y, w, h = cv2.boundingRect(square)
+                    roi = hsv_frame[y:y + h, x:x + w]
 
-                if key == ord('w'):
-                    stats[1][4] += 1
-                    color_groups[math.floor(hsv_frame[target[1], target[0]][0] / 3)][0] += 1
-                    if hsv_frame[target[1], target[0]][0] > stats[1][5]:
-                        stats[1][5] = hsv_frame[target[1], target[0]][0]
-                    if hsv_frame[target[1], target[0]][1] > stats[1][6]:
-                        stats[1][6] = hsv_frame[target[1], target[0]][1]
-                    if hsv_frame[target[1], target[0]][2] > stats[1][7]:
-                        stats[1][7] = hsv_frame[target[1], target[0]][2]
-                    if hsv_frame[target[1], target[0]][0] < stats[1][8]:
-                        stats[1][8] = hsv_frame[target[1], target[0]][0]
-                    if hsv_frame[target[1], target[0]][1] < stats[1][9]:
-                        stats[1][9] = hsv_frame[target[1], target[0]][1]
-                    if hsv_frame[target[1], target[0]][2] < stats[1][10]:
-                        stats[1][10] = hsv_frame[target[1], target[0]][2]
-                    if detected_color == 'w':
-                        print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
-                        results[0].append([True, hsv_frame[target[1], target[0]]])
-                        stats[1][1] += 1
-                    elif detected_color == 'n':
-                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]) + " " + str(detected_color))
-                        results[0].append([False, hsv_frame[target[1], target[0]]])
+                    h_med = np.median(roi[:, :, 0])
+                    s_med = np.median(roi[:, :, 1])
+                    v_med = np.median(roi[:, :, 2])
+
+                    hsv_med = np.array([h_med, s_med, v_med], np.uint8)
+
+                    x, y, w, h = cv2.boundingRect(square)
+                    if x <= target[0] <= x + w and y <= target[1] <= y + h:
+                        is_square = True
+                        if (white_lower[0] <= h_med <= white_upper[0] and
+                            white_lower[1] <= s_med <= white_upper[1] and
+                            white_lower[2] <= v_med <= white_upper[2]):
+                            detected_color = 'w'
+                        elif ((red_lower[0] <= h_med <= red_upper[0] and
+                            red_lower[1] <= s_med <= red_upper[1] and
+                            red_lower[2] <= v_med <= red_upper[2]) or
+                            (red_lower_2[0] <= h_med <= red_upper_2[0] and
+                            red_lower_2[1] <= s_med <= red_upper_2[1] and
+                            red_lower_2[2] <= v_med <= red_upper_2[2])):
+                            detected_color = 'r'
+                        elif (green_lower[0] <= h_med <= green_upper[0] and
+                            green_lower[1] <= s_med <= green_upper[1] and
+                            green_lower[2] <= v_med <= green_upper[2]):
+                            detected_color = 'g'
+                        elif (blue_lower[0] <= h_med <= blue_upper[0] and
+                            blue_lower[1] <= s_med <= blue_upper[1] and
+                            blue_lower[2] <= v_med <= blue_upper[2]):
+                            detected_color = 'b'
+                        elif (orange_lower[0] <= h_med <= orange_upper[0] and
+                            orange_lower[1] <= s_med <= orange_upper[1] and
+                            orange_lower[2] <= v_med <= orange_upper[2]):
+                            detected_color = 'o'
+                        elif (yellow_lower[0] <= h_med <= yellow_upper[0] and
+                            yellow_lower[1] <= s_med <= yellow_upper[1] and
+                            yellow_lower[2] <= v_med <= yellow_upper[2]):
+                            detected_color = 'y'
+                        #print(f"counter={counter}, cell={cell_counter}, row={row_counter}, wall={wall_counter}")
+
+                        if key == ord('w'):
+                            stats[1][4] += 1
+                            color_groups[math.floor(hsv_med[0] / 3)][0] += 1
+                            if hsv_med[0] > stats[1][5]:
+                                stats[1][5] = hsv_med[0]
+                            if hsv_med[1] > stats[1][6]:
+                                stats[1][6] = hsv_med[1]
+                            if hsv_med[2] > stats[1][7]:
+                                stats[1][7] = hsv_med[2]
+                            if hsv_med[0] < stats[1][8]:
+                                stats[1][8] = hsv_med[0]
+                            if hsv_med[1] < stats[1][9]:
+                                stats[1][9] = hsv_med[1]
+                            if hsv_med[2] < stats[1][10]:
+                                stats[1][10] = hsv_med[2]
+                            if detected_color == 'w':
+                                print("Poprawny odczyt: " + str(hsv_med))
+                                results[0].append([True, hsv_med])
+                                stats[1][1] += 1
+                            elif detected_color == 'n':
+                                print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
+                                results[0].append([False, hsv_med])
+                                stats[1][3] += 1
+                            else:
+                                print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
+                                results[0].append([False, hsv_med])
+                                stats[1][2] += 1
+                        elif key == ord('b'):
+                            color_groups[math.floor(hsv_med[0] / 3)][1] += 1
+                            if hsv_med[0] > stats[2][5]:
+                                stats[2][5] = hsv_med[0]
+                            if hsv_med[1] > stats[2][6]:
+                                stats[2][6] = hsv_med[1]
+                            if hsv_med[2] > stats[2][7]:
+                                stats[2][7] = hsv_med[2]
+                            if hsv_med[0] < stats[2][8]:
+                                stats[2][8] = hsv_med[0]
+                            if hsv_med[1] < stats[2][9]:
+                                stats[2][9] = hsv_med[1]
+                            if hsv_med[2] < stats[2][10]:
+                                stats[2][10] = hsv_med[2]
+                            stats[2][4] += 1
+                            if detected_color == 'b':
+                                print("Poprawny odczyt: " + str(hsv_med))
+                                results[0].append([True, hsv_med])
+                                stats[2][1] += 1
+                            elif detected_color == 'n':
+                                print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
+                                results[0].append([False, hsv_med])
+                                stats[2][3] += 1
+                            else:
+                                print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
+                                results[0].append([False, hsv_med])
+                                stats[2][2] += 1
+                        elif key == ord('r'):
+                            color_groups[math.floor(hsv_med[0] / 3)][2] += 1
+                            if hsv_med[0] > stats[3][5] and hsv_med[0] < 90:
+                                stats[3][5] = hsv_med[0]
+                            if hsv_med[1] > stats[3][6]:
+                                stats[3][6] = hsv_med[1]
+                            if hsv_med[2] > stats[3][7]:
+                                stats[3][7] = hsv_med[2]
+                            if hsv_med[0] < stats[3][8] and hsv_med[0] > 90:
+                                stats[3][8] = hsv_med[0]
+                            if hsv_med[1] < stats[3][9]:
+                                stats[3][9] = hsv_med[1]
+                            if hsv_med[2] < stats[3][10]:
+                                stats[3][10] = hsv_med[2]
+                            stats[3][4] += 1
+                            if detected_color == 'r':
+                                print("Poprawny odczyt: " + str(hsv_med))
+                                results[0].append([True, hsv_med])
+                                stats[3][1] += 1
+                            elif detected_color == 'n':
+                                print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
+                                results[0].append([False, hsv_med])
+                                stats[3][3] += 1
+                            else:
+                                print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
+                                results[0].append([False, hsv_med])
+                                stats[3][2] += 1
+                        elif key == ord('y'):
+                            color_groups[math.floor(hsv_med[0] / 4)][3] += 1
+                            if hsv_med[0] > stats[4][5]:
+                                stats[4][5] = hsv_med[0]
+                            if hsv_med[1] > stats[4][6]:
+                                stats[4][6] = hsv_med[1]
+                            if hsv_med[2] > stats[4][7]:
+                                stats[4][7] = hsv_med[2]
+                            if hsv_med[0] < stats[4][8]:
+                                stats[4][8] = hsv_med[0]
+                            if hsv_med[1] < stats[4][9]:
+                                stats[4][9] = hsv_med[1]
+                            if hsv_med[2] < stats[4][10]:
+                                stats[4][10] = hsv_med[2]
+                            stats[4][4] += 1
+                            if detected_color == 'y':
+                                print("Poprawny odczyt: " + str(hsv_med))
+                                results[0].append([True, hsv_med])
+                                stats[4][1] += 1
+                            elif detected_color == 'n':
+                                print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
+                                results[0].append([False, hsv_med])
+                                stats[4][3] += 1
+                            else:
+                                print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
+                                results[0].append([False, hsv_med])
+                                stats[4][2] += 1
+                        elif key == ord('g'):
+                            color_groups[math.floor(hsv_med[0] / 3)][4] += 1
+                            if hsv_med[0] > stats[5][5]:
+                                stats[5][5] = hsv_med[0]
+                            if hsv_med[1] > stats[5][6]:
+                                stats[5][6] = hsv_med[1]
+                            if hsv_med[2] > stats[5][7]:
+                                stats[5][7] = hsv_med[2]
+                            if hsv_med[0] < stats[5][8]:
+                                stats[5][8] = hsv_med[0]
+                            if hsv_med[1] < stats[5][9]:
+                                stats[5][9] = hsv_med[1]
+                            if hsv_med[2] < stats[5][10]:
+                                stats[5][10] = hsv_med[2]
+                            stats[5][4] += 1
+                            if detected_color == 'g':
+                                print("Poprawny odczyt: " + str(hsv_med))
+                                results[0].append([True, hsv_med])
+                                stats[5][1] += 1
+                            elif detected_color == 'n':
+                                print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
+                                results[0].append([False, hsv_med])
+                                stats[5][3] += 1
+                            else:
+                                print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
+                                results[0].append([False, hsv_med])
+                                stats[5][2] += 1
+                        elif key == ord('o'):
+                            color_groups[math.floor(hsv_med[0] / 3)][5] += 1
+                            if hsv_med[0] > stats[6][5] and hsv_med[0] < 90:
+                                stats[6][5] = hsv_med[0]
+                            if hsv_med[1] > stats[6][6]:
+                                stats[6][6] = hsv_med[1]
+                            if hsv_med[2] > stats[6][7]:
+                                stats[6][7] = hsv_med[2]
+                            if hsv_med[0] < stats[6][8] and hsv_med[0] > 90:
+                                stats[6][8] = hsv_med[0]
+                            if hsv_med[1] < stats[6][9]:
+                                stats[6][9] = hsv_med[1]
+                            if hsv_med[2] < stats[6][10]:
+                                stats[6][10] = hsv_med[2]
+                            stats[6][4] += 1
+                            if detected_color == 'o':
+                                print("Poprawny odczyt: " + str(hsv_med))
+                                results[0].append([True, hsv_med])
+                                stats[6][1] += 1
+                            elif detected_color == 'n':
+                                print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
+                                results[0].append([False, hsv_med])
+                                stats[6][3] += 1
+                            else:
+                                print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
+                                results[0].append([False, hsv_med])
+                                stats[6][2] += 1
+                        else:
+                            color_groups[math.floor(hsv_med[0] / 3)][6] += 1
+                            if hsv_med[0] > stats[7][5]:
+                                stats[7][5] = hsv_med[0]
+                            if hsv_med[1] > stats[7][6]:
+                                stats[7][6] = hsv_med[1]
+                            if hsv_med[2] > stats[7][7]:
+                                stats[7][7] = hsv_med[2]
+                            if hsv_med[0] < stats[7][8]:
+                                stats[7][8] = hsv_med[0]
+                            if hsv_med[1] < stats[7][9]:
+                                stats[7][9] = hsv_med[1]
+                            if hsv_med[2] < stats[7][10]:
+                                stats[7][10] = hsv_med[2]
+                            stats[7][4] += 1
+                            if detected_color == 'n':
+                                print("Poprawny odczyt: " + str(hsv_med))
+                                results[0].append([True, hsv_med])
+                                stats[7][3] += 1
+                            else:
+                                print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
+                                results[5].append([False, hsv_med])
+                                stats[7][2] += 1
+
+                    cv2.destroyAllWindows()
+                if not is_square:
+                    if key == ord('w'):
+                        stats[1][4] += 1
                         stats[1][3] += 1
-                    else:
-                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]) + " " + str(detected_color))
-                        results[0].append([False, hsv_frame[target[1], target[0]]])
-                        stats[1][2] += 1
-                elif key == ord('b'):
-                    color_groups[math.floor(hsv_frame[target[1], target[0]][0] / 3)][1] += 1
-                    if hsv_frame[target[1], target[0]][0] > stats[2][5]:
-                        stats[2][5] = hsv_frame[target[1], target[0]][0]
-                    if hsv_frame[target[1], target[0]][1] > stats[2][6]:
-                        stats[2][6] = hsv_frame[target[1], target[0]][1]
-                    if hsv_frame[target[1], target[0]][2] > stats[2][7]:
-                        stats[2][7] = hsv_frame[target[1], target[0]][2]
-                    if hsv_frame[target[1], target[0]][0] < stats[2][8]:
-                        stats[2][8] = hsv_frame[target[1], target[0]][0]
-                    if hsv_frame[target[1], target[0]][1] < stats[2][9]:
-                        stats[2][9] = hsv_frame[target[1], target[0]][1]
-                    if hsv_frame[target[1], target[0]][2] < stats[2][10]:
-                        stats[2][10] = hsv_frame[target[1], target[0]][2]
-                    stats[2][4] += 1
-                    if detected_color == 'b':
-                        print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
-                        results[0].append([True, hsv_frame[target[1], target[0]]])
-                        stats[2][1] += 1
-                    elif detected_color == 'n':
-                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]) + " " + str(detected_color))
-                        results[0].append([False, hsv_frame[target[1], target[0]]])
+                    elif key == ord('b'):
+                        stats[2][4] += 1
                         stats[2][3] += 1
-                    else:
-                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]) + " " + str(detected_color))
-                        results[0].append([False, hsv_frame[target[1], target[0]]])
-                        stats[2][2] += 1
-                elif key == ord('r'):
-                    color_groups[math.floor(hsv_frame[target[1], target[0]][0] / 3)][2] += 1
-                    if hsv_frame[target[1], target[0]][0] > stats[3][5] and hsv_frame[target[1], target[0]][0] < 90:
-                        stats[3][5] = hsv_frame[target[1], target[0]][0]
-                    if hsv_frame[target[1], target[0]][1] > stats[3][6]:
-                        stats[3][6] = hsv_frame[target[1], target[0]][1]
-                    if hsv_frame[target[1], target[0]][2] > stats[3][7]:
-                        stats[3][7] = hsv_frame[target[1], target[0]][2]
-                    if hsv_frame[target[1], target[0]][0] < stats[3][8] and hsv_frame[target[1], target[0]][0] > 90:
-                        stats[3][8] = hsv_frame[target[1], target[0]][0]
-                    if hsv_frame[target[1], target[0]][1] < stats[3][9]:
-                        stats[3][9] = hsv_frame[target[1], target[0]][1]
-                    if hsv_frame[target[1], target[0]][2] < stats[3][10]:
-                        stats[3][10] = hsv_frame[target[1], target[0]][2]
-                    stats[3][4] += 1
-                    if detected_color == 'r':
-                        print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
-                        results[0].append([True, hsv_frame[target[1], target[0]]])
-                        stats[3][1] += 1
-                    elif detected_color == 'n':
-                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]) + " " + str(detected_color))
-                        results[0].append([False, hsv_frame[target[1], target[0]]])
+                    elif key == ord('r'):
+                        stats[3][4] += 1
                         stats[3][3] += 1
-                    else:
-                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]) + " " + str(detected_color))
-                        results[0].append([False, hsv_frame[target[1], target[0]]])
-                        stats[3][2] += 1
-                elif key == ord('y'):
-                    color_groups[math.floor(hsv_frame[target[1], target[0]][0] / 4)][3] += 1
-                    if hsv_frame[target[1], target[0]][0] > stats[4][5]:
-                        stats[4][5] = hsv_frame[target[1], target[0]][0]
-                    if hsv_frame[target[1], target[0]][1] > stats[4][6]:
-                        stats[4][6] = hsv_frame[target[1], target[0]][1]
-                    if hsv_frame[target[1], target[0]][2] > stats[4][7]:
-                        stats[4][7] = hsv_frame[target[1], target[0]][2]
-                    if hsv_frame[target[1], target[0]][0] < stats[4][8]:
-                        stats[4][8] = hsv_frame[target[1], target[0]][0]
-                    if hsv_frame[target[1], target[0]][1] < stats[4][9]:
-                        stats[4][9] = hsv_frame[target[1], target[0]][1]
-                    if hsv_frame[target[1], target[0]][2] < stats[4][10]:
-                        stats[4][10] = hsv_frame[target[1], target[0]][2]
-                    stats[4][4] += 1
-                    if detected_color == 'y':
-                        print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
-                        results[0].append([True, hsv_frame[target[1], target[0]]])
-                        stats[4][1] += 1
-                    elif detected_color == 'n':
-                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]) + " " + str(detected_color))
-                        results[0].append([False, hsv_frame[target[1], target[0]]])
+                    elif key == ord('y'):
+                        stats[4][4] += 1
                         stats[4][3] += 1
-                    else:
-                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]) + " " + str(detected_color))
-                        results[0].append([False, hsv_frame[target[1], target[0]]])
-                        stats[4][2] += 1
-                elif key == ord('g'):
-                    color_groups[math.floor(hsv_frame[target[1], target[0]][0] / 3)][4] += 1
-                    if hsv_frame[target[1], target[0]][0] > stats[5][5]:
-                        stats[5][5] = hsv_frame[target[1], target[0]][0]
-                    if hsv_frame[target[1], target[0]][1] > stats[5][6]:
-                        stats[5][6] = hsv_frame[target[1], target[0]][1]
-                    if hsv_frame[target[1], target[0]][2] > stats[5][7]:
-                        stats[5][7] = hsv_frame[target[1], target[0]][2]
-                    if hsv_frame[target[1], target[0]][0] < stats[5][8]:
-                        stats[5][8] = hsv_frame[target[1], target[0]][0]
-                    if hsv_frame[target[1], target[0]][1] < stats[5][9]:
-                        stats[5][9] = hsv_frame[target[1], target[0]][1]
-                    if hsv_frame[target[1], target[0]][2] < stats[5][10]:
-                        stats[5][10] = hsv_frame[target[1], target[0]][2]
-                    stats[5][4] += 1
-                    if detected_color == 'g':
-                        print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
-                        results[0].append([True, hsv_frame[target[1], target[0]]])
-                        stats[5][1] += 1
-                    elif detected_color == 'n':
-                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]) + " " + str(detected_color))
-                        results[0].append([False, hsv_frame[target[1], target[0]]])
+                    elif key == ord('g'):
+                        stats[5][4] += 1
                         stats[5][3] += 1
-                    else:
-                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]) + " " + str(detected_color))
-                        results[0].append([False, hsv_frame[target[1], target[0]]])
-                        stats[5][2] += 1
-                elif key == ord('o'):
-                    color_groups[math.floor(hsv_frame[target[1], target[0]][0] / 3)][5] += 1
-                    if hsv_frame[target[1], target[0]][0] > stats[6][5] and hsv_frame[target[1], target[0]][0] < 90:
-                        stats[6][5] = hsv_frame[target[1], target[0]][0]
-                    if hsv_frame[target[1], target[0]][1] > stats[6][6]:
-                        stats[6][6] = hsv_frame[target[1], target[0]][1]
-                    if hsv_frame[target[1], target[0]][2] > stats[6][7]:
-                        stats[6][7] = hsv_frame[target[1], target[0]][2]
-                    if hsv_frame[target[1], target[0]][0] < stats[6][8] and hsv_frame[target[1], target[0]][0] > 90:
-                        stats[6][8] = hsv_frame[target[1], target[0]][0]
-                    if hsv_frame[target[1], target[0]][1] < stats[6][9]:
-                        stats[6][9] = hsv_frame[target[1], target[0]][1]
-                    if hsv_frame[target[1], target[0]][2] < stats[6][10]:
-                        stats[6][10] = hsv_frame[target[1], target[0]][2]
-                    stats[6][4] += 1
-                    if detected_color == 'o':
-                        print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
-                        results[0].append([True, hsv_frame[target[1], target[0]]])
-                        stats[6][1] += 1
-                    elif detected_color == 'n':
-                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]) + " " + str(detected_color))
-                        results[0].append([False, hsv_frame[target[1], target[0]]])
+                    elif key == ord('o'):
+                        stats[6][4] += 1
                         stats[6][3] += 1
                     else:
-                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]) + " " + str(detected_color))
-                        results[0].append([False, hsv_frame[target[1], target[0]]])
-                        stats[6][2] += 1
-                else:
-                    color_groups[math.floor(hsv_frame[target[1], target[0]][0] / 3)][6] += 1
-                    if hsv_frame[target[1], target[0]][0] > stats[7][5]:
-                        stats[7][5] = hsv_frame[target[1], target[0]][0]
-                    if hsv_frame[target[1], target[0]][1] > stats[7][6]:
-                        stats[7][6] = hsv_frame[target[1], target[0]][1]
-                    if hsv_frame[target[1], target[0]][2] > stats[7][7]:
-                        stats[7][7] = hsv_frame[target[1], target[0]][2]
-                    if hsv_frame[target[1], target[0]][0] < stats[7][8]:
-                        stats[7][8] = hsv_frame[target[1], target[0]][0]
-                    if hsv_frame[target[1], target[0]][1] < stats[7][9]:
-                        stats[7][9] = hsv_frame[target[1], target[0]][1]
-                    if hsv_frame[target[1], target[0]][2] < stats[7][10]:
-                        stats[7][10] = hsv_frame[target[1], target[0]][2]
-                    stats[7][4] += 1
-                    if detected_color == 'n':
-                        print("Poprawny odczyt: " + str(hsv_frame[target[1], target[0]]))
-                        results[0].append([True, hsv_frame[target[1], target[0]]])
+                        stats[7][4] += 1
                         stats[7][3] += 1
-                    else:
-                        print("Nieoprawny odczyt: " + str(hsv_frame[target[1], target[0]]) + " " + str(detected_color))
-                        results[5].append([False, hsv_frame[target[1], target[0]]])
-                        stats[7][2] += 1
-
-                cv2.destroyAllWindows()
 
     filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     with open(f"results/{filename}_results.csv", 'w', newline='') as csvfile:
@@ -420,67 +467,92 @@ def test_photos():
         writer = csv.writer(csvfile)
         writer.writerows(color_groups)
 
-def read_colors(image_frame):
+def read_colors(image_frame, squares):
     global targets, is_recognized
 
     hsv_frame = cv2.cvtColor(image_frame, cv2.COLOR_BGR2HSV)
 
     red_lower = np.array([limits[0][0][0], limits[0][0][1], limits[0][0][2]], np.uint8)
     red_upper = np.array([limits[0][1][0], limits[0][1][1], limits[0][1][2]], np.uint8)
-    red_mask = cv2.inRange(hsv_frame, red_lower, red_upper)
 
-    red_lower = np.array([limits[1][0][0], limits[1][0][1], limits[1][0][2]], np.uint8)
-    red_upper = np.array([limits[1][1][0], limits[1][1][1], limits[1][1][2]], np.uint8)
-    red_mask_2 = cv2.inRange(hsv_frame, red_lower, red_upper)
+    red_lower_2 = np.array([limits[1][0][0], limits[1][0][1], limits[1][0][2]], np.uint8)
+    red_upper_2 = np.array([limits[1][1][0], limits[1][1][1], limits[1][1][2]], np.uint8)
 
     green_lower = np.array([limits[2][0][0], limits[2][0][1], limits[2][0][2]], np.uint8)
     green_upper = np.array([limits[2][1][0], limits[2][1][1], limits[2][1][2]], np.uint8)
-    green_mask = cv2.inRange(hsv_frame, green_lower, green_upper)
 
     blue_lower = np.array([limits[3][0][0], limits[3][0][1], limits[3][0][2]], np.uint8)
     blue_upper = np.array([limits[3][1][0], limits[3][1][1], limits[3][1][2]], np.uint8)
-    blue_mask = cv2.inRange(hsv_frame, blue_lower, blue_upper)
 
     orange_lower = np.array([limits[4][0][0], limits[4][0][1], limits[4][0][2]], np.uint8)
     orange_upper = np.array([limits[4][1][0], limits[4][1][1], limits[4][1][2]], np.uint8)
-    orange_mask = cv2.inRange(hsv_frame, orange_lower, orange_upper)
 
     yellow_lower = np.array([limits[5][0][0], limits[5][0][1], limits[5][0][2]], np.uint8)
     yellow_upper = np.array([limits[5][1][0], limits[5][1][1], limits[5][1][2]], np.uint8)
-    yellow_mask = cv2.inRange(hsv_frame, yellow_lower, yellow_upper)
 
     white_lower = np.array([limits[6][0][0], limits[6][0][1], limits[6][0][2]], np.uint8)
     white_upper = np.array([limits[6][1][0], limits[6][1][1], limits[6][1][2]], np.uint8)
-    white_mask = cv2.inRange(hsv_frame, white_lower, white_upper)
 
-    orange_lower = np.array([limits[7][0][0], limits[7][0][1], limits[7][0][2]], np.uint8)
-    orange_upper = np.array([limits[7][1][0], limits[7][1][1], limits[7][1][2]], np.uint8)
-    orange_mask_2 = cv2.inRange(hsv_frame, orange_lower, orange_upper)
+    orange_lower_2 = np.array([limits[7][0][0], limits[7][0][1], limits[7][0][2]], np.uint8)
+    orange_upper_2 = np.array([limits[7][1][0], limits[7][1][1], limits[7][1][2]], np.uint8)
 
     #print(hsv_frame[targets[4][1], targets[4][0]])
 
-    for target in targets:
-        if white_mask[target[1], target[0]] > 0:
-            image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (255, 255, 255), 8)
-            target[2] = 0
-        elif red_mask[target[1], target[0]] > 0 or red_mask_2[target[1], target[0]] > 0:
-            image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 0, 255), 8)
-            target[2] = 2
-        elif green_mask[target[1], target[0]] > 0:
-            image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 255, 0), 8)
-            target[2] = 4
-        elif blue_mask[target[1], target[0]] > 0:
-            image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (255, 0, 0), 8)
-            target[2] = 1
-        elif orange_mask[target[1], target[0]] > 0:
-            image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 122, 255), 8)
-            target[2] = 5
-        elif yellow_mask[target[1], target[0]] > 0:
-            image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 255, 255), 8)
-            target[2] = 3
-        else:
-            image_frame = cv2.circle(image_frame, [target[0], target[1]], 10, (0, 0, 0), 8)
-            is_recognized = False
+    counter = 0
+
+    for square in squares:
+        x, y, w, h = cv2.boundingRect(square)
+        roi = hsv_frame[y:y + h, x:x + w]
+
+        h_med = np.median(roi[:, :, 0])
+        s_med = np.median(roi[:, :, 1])
+        v_med = np.median(roi[:, :, 2])
+
+        hsv_med = np.array([h_med, s_med, v_med], np.uint8)
+
+        x, y, w, h = cv2.boundingRect(square)
+
+        for target in targets:
+            if x <= target[0] <= x + w and y <= target[1] <= y + h:
+                counter += 1
+                if (white_lower[0] <= h_med <= white_upper[0] and
+                    white_lower[1] <= s_med <= white_upper[1] and
+                    white_lower[2] <= v_med <= white_upper[2]):
+                    image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (255, 255, 255), 8)
+                    target[2] = 0
+                elif ((red_lower[0] <= h_med <= red_upper[0] and
+                    red_lower[1] <= s_med <= red_upper[1] and
+                    red_lower[2] <= v_med <= red_upper[2]) or
+                    (red_lower_2[0] <= h_med <= red_upper_2[0] and
+                    red_lower_2[1] <= s_med <= red_upper_2[1] and
+                    red_lower_2[2] <= v_med <= red_upper_2[2])):
+                    image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 0, 255), 8)
+                    target[2] = 2
+                elif (green_lower[0] <= h_med <= green_upper[0] and
+                    green_lower[1] <= s_med <= green_upper[1] and
+                    green_lower[2] <= v_med <= green_upper[2]):
+                    image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 255, 0), 8)
+                    target[2] = 4
+                elif (blue_lower[0] <= h_med <= blue_upper[0] and
+                    blue_lower[1] <= s_med <= blue_upper[1] and
+                    blue_lower[2] <= v_med <= blue_upper[2]):
+                    image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (255, 0, 0), 8)
+                    target[2] = 1
+                elif (orange_lower[0] <= h_med <= orange_upper[0] and
+                    orange_lower[1] <= s_med <= orange_upper[1] and
+                    orange_lower[2] <= v_med <= orange_upper[2]):
+                    image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 122, 255), 8)
+                    target[2] = 5
+                elif (yellow_lower[0] <= h_med <= yellow_upper[0] and
+                    yellow_lower[1] <= s_med <= yellow_upper[1] and
+                    yellow_lower[2] <= v_med <= yellow_upper[2]):
+                    image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 255, 255), 8)
+                    target[2] = 3
+                else:
+                    image_frame = cv2.circle(image_frame, [target[0], target[1]], 10, (0, 0, 0), 8)
+                    counter -= 1
+
+    return counter
 
 def is_same(last_wall):
     i = 0
@@ -520,25 +592,36 @@ def generate_solution():
     except:
         print("Invalid cube!!!")
 
-def square_finder(image_frame):
+def square_finder(image_frame, isConfigurable):
+    global targets
+
     img_hsv = cv2.cvtColor(image_frame, cv2.COLOR_BGR2HSV)
+    if isConfigurable:
+        l_h = cv2.getTrackbarPos("L-H", "Trackbars")
+        l_s = cv2.getTrackbarPos("L-S", "Trackbars")
+        l_v = cv2.getTrackbarPos("L-V", "Trackbars")
+        h_h = cv2.getTrackbarPos("H-H", "Trackbars")
+        h_s = cv2.getTrackbarPos("H-S", "Trackbars")
+        h_v = cv2.getTrackbarPos("H-V", "Trackbars")
 
-    l_h = cv2.getTrackbarPos("L-H", "Trackbars")
-    l_s = cv2.getTrackbarPos("L-S", "Trackbars")
-    l_v = cv2.getTrackbarPos("L-V", "Trackbars")
-    h_h = cv2.getTrackbarPos("H-H", "Trackbars")
-    h_s = cv2.getTrackbarPos("H-S", "Trackbars")
-    h_v = cv2.getTrackbarPos("H-V", "Trackbars")
+        lower = np.array([l_h, l_s, l_v])
+        upper = np.array([h_h, h_s, h_v])
+    else:
+        lower = np.array([0, 0, 0])
+        upper = np.array([179, 255, 115])
 
-    lower = np.array([l_h, l_s, l_v])
-    upper = np.array([h_h, h_s, h_v])
     mask = cv2.inRange(img_hsv, lower, upper)
+
+    #kernel = np.ones((3, 3), np.uint8)
+    #mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
     contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
+    filtered_contours = []
+
     for contour in contours:
         area = cv2.contourArea(contour)
-        if area < 2000:
+        if area < 2000 or area > 15000:
             continue
 
         rect = cv2.minAreaRect(contour)
@@ -552,21 +635,31 @@ def square_finder(image_frame):
         if aspectRatio < 1.3:
             box = cv2.boxPoints(rect)
             box = box.astype(int)
-            cv2.drawContours(image_frame, [box], 0, (0, 255, 0), 2)
+            cv2.drawContours(image_frame, [box], 0, (0, 0, 255), 2)
 
+            x,y,w,h = cv2.boundingRect(contour)
+
+            count = 0
+            for target in targets:
+                if x <= target[0] <= x + w and y <= target[1] <= y + h:
+                    count += 1
+
+            if count == 1:
+                filtered_contours.append(contour)
+
+    for contour in filtered_contours:
+        rect = cv2.minAreaRect(contour)
+        box = cv2.boxPoints(rect)
+        box = box.astype(int)
+        cv2.drawContours(image_frame, [box], 0, (0, 255, 0), 2)
+
+    return filtered_contours
 
 def nothing(x):
     pass
 
 def cube_solver():
     global cube, middle, gap, targets, is_recognized
-
-    counter = 0
-    is_saved = [False] * 6
-    last_wall = None
-    wall_counter = 0
-
-    webcam = cv2.VideoCapture(0)
 
     cv2.namedWindow("Trackbars")
     cv2.createTrackbar("L-H", "Trackbars", 0, 179, nothing)
@@ -576,11 +669,16 @@ def cube_solver():
     cv2.createTrackbar("H-S", "Trackbars", 255, 255, nothing)
     cv2.createTrackbar("H-V", "Trackbars", 115, 255, nothing)
 
+    is_saved = [False] * 6
+    last_wall = None
+    wall_counter = 0
+    counter = 0
+
+    webcam = cv2.VideoCapture(0)
+
     while wall_counter < 6:
         ret, image_frame = webcam.read()
         if ret:
-            square_finder(image_frame)
-
             middle = [int(image_frame.shape[1] / 2), int(image_frame.shape[0] / 2)]
             gap = 100
 
@@ -595,7 +693,9 @@ def cube_solver():
                       [middle[0] + gap, middle[1] + gap, -1]]
             is_recognized = True
 
-            read_colors(image_frame)
+            squares = square_finder(image_frame, True)
+
+            cell_counter = read_colors(image_frame, squares)
 
             last_wall = targets
 
@@ -603,15 +703,10 @@ def cube_solver():
 
             cv2.imshow("Color Detection", image_frame)
 
-            if is_recognized and not is_saved[targets[4][2]] and is_same(last_wall):
-                counter += 1
-            else:
-                counter = 0
+            #if cell_counter == 9 and is_same(last_wall):
+            #    counter += 1
 
-            if counter == 50:
-                #print(targets[0][2], targets[1][2], targets[2][2])
-                #print(targets[3][2], targets[4][2], targets[5][2])
-                #print(targets[6][2], targets[7][2], targets[8][2])
+            if cell_counter == 9 and not is_saved[targets[4][2]]:
                 is_saved[targets[4][2]] = True
                 cube[targets[4][2]][0][0] = targets[0][2]
                 cube[targets[4][2]][0][1] = targets[1][2]
@@ -624,6 +719,7 @@ def cube_solver():
                 cube[targets[4][2]][2][2] = targets[8][2]
                 wall_counter += 1
                 print("Wall " + str(wall_counter) + " saved!!!")
+                counter = 0
 
         else:
             print("Image reading error!!!")
