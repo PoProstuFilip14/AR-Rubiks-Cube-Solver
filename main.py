@@ -9,25 +9,25 @@ from collections import Counter
 
 results = [[[[] for _ in range(2)]] for _ in range(6)]
 stats = [
-    ['Kolor', 'Correct-Color', 'Wrong-Color', 'Non-Color', 'All', 'Highest_H', 'Highest_S','Highest_V', 'Lowest_H', 'Lowest_S', 'Lowest_V'],
-    ['White', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256],
-    ['Blue', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256],
-    ['Red', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256],
-    ['Yellow', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256],
-    ['Green', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256],
-    ['Orange', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256],
-    ['None', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256]
+    ['Kolor', 'Correct-Color', 'Wrong-Color', 'Non-Color', 'All', 'Highest_H', 'Highest_S','Highest_V', 'Lowest_H', 'Lowest_S', 'Lowest_V', 'No-Square'],
+    ['White', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256, 0],
+    ['Blue', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256, 0],
+    ['Red', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256, 0],
+    ['Yellow', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256, 0],
+    ['Green', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256, 0],
+    ['Orange', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256, 0],
+    ['None', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256, 0]
 ]
 color_groups = [[0 for _ in range(7)] for _ in range(60)]
 cube = [[[-1 for _ in range(3)] for _ in range(3)] for _ in range(6)]
-limits = [[[0, 27, 17], [5, 225, 255]],
-          [[165, 27, 17], [179, 225, 255]],
-          [[69, 20, 14], [92, 255, 255]],
-          [[99, 50, 12], [116, 255, 225]],
-          [[6, 32, 35], [14, 255, 255]],
-          [[15, 7, 37], [29, 255, 255]],
-          [[90, 0, 115], [170, 100, 255]],
-          [[6, 32, 35], [15, 225, 255]]]
+limits = [[[0, 81, 36], [5, 225, 255]],#red1
+          [[120, 81, 36], [179, 225, 255]],#red2
+          [[39, 50, 18], [98, 255, 255]],#green
+          [[99, 48, 31], [116, 255, 225]],#blue
+          [[6, 49, 37], [14, 255, 255]],#orange
+          [[15, 28, 38], [38, 255, 255]],#yellow
+          [[90, 0, 115], [170, 120, 255]],#white
+          [[6, 49, 37], [14, 255, 255]]]#orange2 (not in use)
 middle = [int(0), int(0)]
 gap = 100
 targets = [[middle[0] - gap, middle[1] - gap, -1],
@@ -437,24 +437,31 @@ def test_photos():
                     if key == ord('w'):
                         stats[1][4] += 1
                         stats[1][3] += 1
+                        stats[1][11] += 1
                     elif key == ord('b'):
                         stats[2][4] += 1
                         stats[2][3] += 1
+                        stats[2][11] += 1
                     elif key == ord('r'):
                         stats[3][4] += 1
                         stats[3][3] += 1
+                        stats[3][11] += 1
                     elif key == ord('y'):
                         stats[4][4] += 1
                         stats[4][3] += 1
+                        stats[4][11] += 1
                     elif key == ord('g'):
                         stats[5][4] += 1
                         stats[5][3] += 1
+                        stats[5][11] += 1
                     elif key == ord('o'):
                         stats[6][4] += 1
                         stats[6][3] += 1
+                        stats[6][11] += 1
                     else:
                         stats[7][4] += 1
-                        stats[7][3] += 1
+                        stats[7][2] += 1
+                        stats[7][11] += 1
 
     filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     with open(f"results/{filename}_results.csv", 'w', newline='') as csvfile:
@@ -469,6 +476,9 @@ def test_photos():
 
 def read_colors(image_frame, squares):
     global targets, is_recognized
+
+    for target in targets:
+        target[2] = -1
 
     hsv_frame = cv2.cvtColor(image_frame, cv2.COLOR_BGR2HSV)
 
@@ -512,13 +522,18 @@ def read_colors(image_frame, squares):
 
         x, y, w, h = cv2.boundingRect(square)
 
+        rect = cv2.minAreaRect(square)
+        box = cv2.boxPoints(rect)
+        box = box.astype(int)
+
         for target in targets:
-            if x <= target[0] <= x + w and y <= target[1] <= y + h:
+            if x <= target[0] <= x + w and y <= target[1] <= y + h and target[2] < 0:
                 counter += 1
                 if (white_lower[0] <= h_med <= white_upper[0] and
                     white_lower[1] <= s_med <= white_upper[1] and
                     white_lower[2] <= v_med <= white_upper[2]):
                     image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (255, 255, 255), 8)
+                    cv2.drawContours(image_frame, [box], 0, (255, 255, 255), 2)
                     target[2] = 0
                 elif ((red_lower[0] <= h_med <= red_upper[0] and
                     red_lower[1] <= s_med <= red_upper[1] and
@@ -527,30 +542,39 @@ def read_colors(image_frame, squares):
                     red_lower_2[1] <= s_med <= red_upper_2[1] and
                     red_lower_2[2] <= v_med <= red_upper_2[2])):
                     image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 0, 255), 8)
+                    cv2.drawContours(image_frame, [box], 0, (0, 0, 255), 2)
                     target[2] = 2
                 elif (green_lower[0] <= h_med <= green_upper[0] and
                     green_lower[1] <= s_med <= green_upper[1] and
                     green_lower[2] <= v_med <= green_upper[2]):
                     image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 255, 0), 8)
+                    cv2.drawContours(image_frame, [box], 0, (0, 255, 0), 2)
                     target[2] = 4
                 elif (blue_lower[0] <= h_med <= blue_upper[0] and
                     blue_lower[1] <= s_med <= blue_upper[1] and
                     blue_lower[2] <= v_med <= blue_upper[2]):
                     image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (255, 0, 0), 8)
+                    cv2.drawContours(image_frame, [box], 0, (255, 0, 0), 2)
                     target[2] = 1
                 elif (orange_lower[0] <= h_med <= orange_upper[0] and
                     orange_lower[1] <= s_med <= orange_upper[1] and
                     orange_lower[2] <= v_med <= orange_upper[2]):
                     image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 122, 255), 8)
+                    cv2.drawContours(image_frame, [box], 0, (0, 122, 255), 2)
                     target[2] = 5
                 elif (yellow_lower[0] <= h_med <= yellow_upper[0] and
                     yellow_lower[1] <= s_med <= yellow_upper[1] and
                     yellow_lower[2] <= v_med <= yellow_upper[2]):
                     image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 255, 255), 8)
+                    cv2.drawContours(image_frame, [box], 0, (0, 255, 255), 2)
                     target[2] = 3
                 else:
-                    image_frame = cv2.circle(image_frame, [target[0], target[1]], 10, (0, 0, 0), 8)
+                    cv2.drawContours(image_frame, [box], 0, (0, 0, 0), 2)
                     counter -= 1
+
+    for target in targets:
+        if target[2] < 0:
+            image_frame = cv2.circle(image_frame, [target[0], target[1]], 10, (0, 0, 0), 8)
 
     return counter
 
@@ -583,7 +607,8 @@ def generate_solution():
                 else:
                     print("ERROR!!!")
 
-    print(cube_string)
+    formatted = ' '.join(cube_string[i:i + 9] for i in range(0, len(cube_string), 9))
+    print(formatted)
     print(Counter(cube_string))
 
     try:
@@ -595,27 +620,48 @@ def generate_solution():
 def square_finder(image_frame, isConfigurable):
     global targets
 
-    img_hsv = cv2.cvtColor(image_frame, cv2.COLOR_BGR2HSV)
-    if isConfigurable:
-        l_h = cv2.getTrackbarPos("L-H", "Trackbars")
-        l_s = cv2.getTrackbarPos("L-S", "Trackbars")
-        l_v = cv2.getTrackbarPos("L-V", "Trackbars")
-        h_h = cv2.getTrackbarPos("H-H", "Trackbars")
-        h_s = cv2.getTrackbarPos("H-S", "Trackbars")
-        h_v = cv2.getTrackbarPos("H-V", "Trackbars")
+    #img_hsv = cv2.cvtColor(image_frame, cv2.COLOR_BGR2HSV)
 
-        lower = np.array([l_h, l_s, l_v])
-        upper = np.array([h_h, h_s, h_v])
-    else:
-        lower = np.array([0, 0, 0])
-        upper = np.array([179, 255, 115])
+    #if isConfigurable:
+    #    l_h = cv2.getTrackbarPos("L-H", "Trackbars")
+    #    l_s = cv2.getTrackbarPos("L-S", "Trackbars")
+    #    l_v = cv2.getTrackbarPos("L-V", "Trackbars")
+    #    h_h = cv2.getTrackbarPos("H-H", "Trackbars")
+    #    h_s = cv2.getTrackbarPos("H-S", "Trackbars")
+    #    h_v = cv2.getTrackbarPos("H-V", "Trackbars")
 
-    mask = cv2.inRange(img_hsv, lower, upper)
+    #    lower = np.array([l_h, l_s, l_v])
+    #    upper = np.array([h_h, h_s, h_v])
+    #else:
+    #    lower = np.array([0, 0, 0])
+    #    upper = np.array([179, 255, 115])
+
+    #mask = cv2.inRange(equalized_image, lower, upper)
 
     #kernel = np.ones((3, 3), np.uint8)
     #mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
-    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    img_grey = cv2.cvtColor(image_frame, cv2.COLOR_BGR2GRAY)
+    equalized_image = cv2.equalizeHist(img_grey)
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    background = cv2.morphologyEx(equalized_image, cv2.MORPH_DILATE, kernel)
+    shadow_removed = cv2.subtract(background, equalized_image)
+
+    blur = cv2.GaussianBlur(shadow_removed, (7, 7), 0)
+    sharpened_image = cv2.addWeighted(shadow_removed, 2.0, blur, -0.5, 0)
+
+    bilateral_filter = cv2.bilateralFilter(sharpened_image, 7, 50, 50)
+
+    median = np.median(bilateral_filter)
+
+    lower = int(max(0, 0.66 * median))
+    upper = int(max(110, 1.33 * median))
+    
+    segmented_map = cv2.Canny(bilateral_filter, lower, upper)
+    segmented_map = cv2.dilate(segmented_map, None, iterations=2)
+
+    contours, _ = cv2.findContours(segmented_map, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     filtered_contours = []
 
@@ -635,7 +681,7 @@ def square_finder(image_frame, isConfigurable):
         if aspectRatio < 1.3:
             box = cv2.boxPoints(rect)
             box = box.astype(int)
-            cv2.drawContours(image_frame, [box], 0, (0, 0, 255), 2)
+            #cv2.drawContours(image_frame, [box], 0, (0, 0, 255), 2)
 
             x,y,w,h = cv2.boundingRect(contour)
 
@@ -647,11 +693,11 @@ def square_finder(image_frame, isConfigurable):
             if count == 1:
                 filtered_contours.append(contour)
 
-    for contour in filtered_contours:
-        rect = cv2.minAreaRect(contour)
-        box = cv2.boxPoints(rect)
-        box = box.astype(int)
-        cv2.drawContours(image_frame, [box], 0, (0, 255, 0), 2)
+    #for contour in filtered_contours:
+        #rect = cv2.minAreaRect(contour)
+        #box = cv2.boxPoints(rect)
+        #box = box.astype(int)
+        #cv2.drawContours(image_frame, [box], 0, (0, 255, 0), 2)
 
     return filtered_contours
 
@@ -704,7 +750,7 @@ def cube_solver():
             cv2.imshow("Color Detection", image_frame)
 
             #if cell_counter == 9 and is_same(last_wall):
-            #    counter += 1
+                #counter += 1
 
             if cell_counter == 9 and not is_saved[targets[4][2]]:
                 is_saved[targets[4][2]] = True
