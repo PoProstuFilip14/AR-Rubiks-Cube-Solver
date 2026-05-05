@@ -20,14 +20,14 @@ stats = [
 ]
 color_groups = [[0 for _ in range(7)] for _ in range(60)]
 cube = [[[-1 for _ in range(3)] for _ in range(3)] for _ in range(6)]
-limits = [[[0, 81, 36], [5, 225, 255]],#red1
-          [[120, 81, 36], [179, 225, 255]],#red2
-          [[39, 50, 18], [98, 255, 255]],#green
-          [[99, 48, 31], [116, 255, 225]],#blue
-          [[6, 49, 37], [14, 255, 255]],#orange
-          [[15, 28, 38], [38, 255, 255]],#yellow
-          [[90, 0, 115], [170, 120, 255]],#white
-          [[6, 49, 37], [14, 255, 255]]]#orange2 (not in use)
+limits = [[[0, 77, 16], [4, 225, 255]],#red1
+          [[165, 77, 16], [179, 225, 255]],#red2
+          [[36, 48, 24], [98, 255, 255]],#green
+          [[99, 0, 20], [119, 255, 225]],#blue
+          [[5, 48, 29], [14, 255, 255]],#orange
+          [[15, 26, 86], [35, 255, 255]],#yellow
+          [[37, 0, 114], [164, 117, 255]],#white
+          [[6, 48, 29], [14, 255, 255]]]#orange2 (not in use)
 middle = [int(0), int(0)]
 gap = 100
 targets = [[middle[0] - gap, middle[1] - gap, -1],
@@ -127,6 +127,8 @@ def test_photos():
 
             hsv_frame = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
+            hsv_frame[:,:,2] = cv2.equalizeHist(hsv_frame[:,:,2])
+
             targets = [[middle[0] - gap, middle[1] - gap, -1],
                        [middle[0], middle[1] - gap, -1],
                        [middle[0] + gap, middle[1] - gap, -1],
@@ -205,42 +207,68 @@ def test_photos():
                         wall_counter = 0
                 is_square = False
                 for square in squares:
+                    mask = np.zeros(hsv_frame.shape[:2], dtype=np.uint8)
+                    cv2.drawContours(mask, [square], -1, 255, -1)
+                    kernel = np.ones((5, 5), np.uint8)
+                    mask = cv2.erode(mask, kernel)
+
                     x, y, w, h = cv2.boundingRect(square)
                     roi = hsv_frame[y:y + h, x:x + w]
 
-                    h_med = np.median(roi[:, :, 0])
-                    s_med = np.median(roi[:, :, 1])
-                    v_med = np.median(roi[:, :, 2])
+                    h_channel = hsv_frame[:, :, 0]
+                    s_channel = hsv_frame[:, :, 1]
+                    v_channel = hsv_frame[:, :, 2]
 
-                    hsv_med = np.array([h_med, s_med, v_med], np.uint8)
+                    valid_mask = (mask == 255) & (s_channel > 60) & (v_channel > 50)
+
+                    h_vals = h_channel[valid_mask]
+
+                    if len(h_vals) == 0:
+                        continue
+
+                    hist = np.bincount(h_vals, minlength=180)
+                    h_dom = np.argmax(hist)
+
+                    s_vals = s_channel[mask == 255]
+                    v_vals = v_channel[mask == 255]
+
+                    s_med = np.median(s_vals)
+                    v_med = np.median(v_vals)
+
+                    hsv_med = np.array([h_dom, s_med, v_med], np.uint8)
 
                     x, y, w, h = cv2.boundingRect(square)
+
+                    rect = cv2.minAreaRect(square)
+                    box = cv2.boxPoints(rect)
+                    box = box.astype(int)
+
                     if x <= target[0] <= x + w and y <= target[1] <= y + h:
                         is_square = True
-                        if (white_lower[0] <= h_med <= white_upper[0] and
+                        if (white_lower[0] <= h_dom <= white_upper[0] and
                             white_lower[1] <= s_med <= white_upper[1] and
                             white_lower[2] <= v_med <= white_upper[2]):
                             detected_color = 'w'
-                        elif ((red_lower[0] <= h_med <= red_upper[0] and
+                        elif ((red_lower[0] <= h_dom <= red_upper[0] and
                             red_lower[1] <= s_med <= red_upper[1] and
                             red_lower[2] <= v_med <= red_upper[2]) or
-                            (red_lower_2[0] <= h_med <= red_upper_2[0] and
+                            (red_lower_2[0] <= h_dom <= red_upper_2[0] and
                             red_lower_2[1] <= s_med <= red_upper_2[1] and
                             red_lower_2[2] <= v_med <= red_upper_2[2])):
                             detected_color = 'r'
-                        elif (green_lower[0] <= h_med <= green_upper[0] and
+                        elif (green_lower[0] <= h_dom <= green_upper[0] and
                             green_lower[1] <= s_med <= green_upper[1] and
                             green_lower[2] <= v_med <= green_upper[2]):
                             detected_color = 'g'
-                        elif (blue_lower[0] <= h_med <= blue_upper[0] and
+                        elif (blue_lower[0] <= h_dom <= blue_upper[0] and
                             blue_lower[1] <= s_med <= blue_upper[1] and
                             blue_lower[2] <= v_med <= blue_upper[2]):
                             detected_color = 'b'
-                        elif (orange_lower[0] <= h_med <= orange_upper[0] and
+                        elif (orange_lower[0] <= h_dom <= orange_upper[0] and
                             orange_lower[1] <= s_med <= orange_upper[1] and
                             orange_lower[2] <= v_med <= orange_upper[2]):
                             detected_color = 'o'
-                        elif (yellow_lower[0] <= h_med <= yellow_upper[0] and
+                        elif (yellow_lower[0] <= h_dom <= yellow_upper[0] and
                             yellow_lower[1] <= s_med <= yellow_upper[1] and
                             yellow_lower[2] <= v_med <= yellow_upper[2]):
                             detected_color = 'y'
@@ -431,8 +459,6 @@ def test_photos():
                                 print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
                                 results[5].append([False, hsv_med])
                                 stats[7][2] += 1
-
-                    cv2.destroyAllWindows()
                 if not is_square:
                     if key == ord('w'):
                         stats[1][4] += 1
@@ -463,6 +489,8 @@ def test_photos():
                         stats[7][2] += 1
                         stats[7][11] += 1
 
+    cv2.destroyAllWindows()
+
     filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     with open(f"results/{filename}_results.csv", 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
@@ -481,6 +509,10 @@ def read_colors(image_frame, squares):
         target[2] = -1
 
     hsv_frame = cv2.cvtColor(image_frame, cv2.COLOR_BGR2HSV)
+
+    hsv_frame = cv2.GaussianBlur(hsv_frame, (5, 5), 0)
+
+    #cv2.imshow("hsv_frame", hsv_frame)
 
     red_lower = np.array([limits[0][0][0], limits[0][0][1], limits[0][0][2]], np.uint8)
     red_upper = np.array([limits[0][1][0], limits[0][1][1], limits[0][1][2]], np.uint8)
@@ -511,14 +543,36 @@ def read_colors(image_frame, squares):
     counter = 0
 
     for square in squares:
+        mask = np.zeros(hsv_frame.shape[:2], dtype=np.uint8)
+        cv2.drawContours(mask, [square], -1, 255, -1)
+        kernel = np.ones((5,5), np.uint8)
+        mask = cv2.erode(mask, kernel)
+        
         x, y, w, h = cv2.boundingRect(square)
         roi = hsv_frame[y:y + h, x:x + w]
 
-        h_med = np.median(roi[:, :, 0])
-        s_med = np.median(roi[:, :, 1])
-        v_med = np.median(roi[:, :, 2])
+        h_channel = hsv_frame[:, :, 0]
+        s_channel = hsv_frame[:, :, 1]
+        v_channel = hsv_frame[:, :, 2]
 
-        hsv_med = np.array([h_med, s_med, v_med], np.uint8)
+        #valid_mask = (mask == 255) & (s_channel > 50) & (v_channel > 60)
+        valid_mask = (mask == 255) & ((s_channel > 50) | (v_channel > 150))
+
+        h_vals = h_channel[valid_mask]
+
+        if len(h_vals) == 0:
+            continue
+
+        hist = np.bincount(h_vals, minlength=180)
+        h_dom = np.argmax(hist)
+
+        s_vals = s_channel[mask == 255]
+        v_vals = v_channel[mask == 255]
+
+        s_med = np.median(s_vals)
+        v_med = np.median(v_vals)
+
+        hsv_med = np.array([h_dom, s_med, v_med], np.uint8)
 
         x, y, w, h = cv2.boundingRect(square)
 
@@ -529,40 +583,46 @@ def read_colors(image_frame, squares):
         for target in targets:
             if x <= target[0] <= x + w and y <= target[1] <= y + h and target[2] < 0:
                 counter += 1
-                if (white_lower[0] <= h_med <= white_upper[0] and
-                    white_lower[1] <= s_med <= white_upper[1] and
-                    white_lower[2] <= v_med <= white_upper[2]):
-                    image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (255, 255, 255), 8)
-                    cv2.drawContours(image_frame, [box], 0, (255, 255, 255), 2)
-                    target[2] = 0
-                elif ((red_lower[0] <= h_med <= red_upper[0] and
-                    red_lower[1] <= s_med <= red_upper[1] and
-                    red_lower[2] <= v_med <= red_upper[2]) or
-                    (red_lower_2[0] <= h_med <= red_upper_2[0] and
-                    red_lower_2[1] <= s_med <= red_upper_2[1] and
-                    red_lower_2[2] <= v_med <= red_upper_2[2])):
-                    image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 0, 255), 8)
-                    cv2.drawContours(image_frame, [box], 0, (0, 0, 255), 2)
-                    target[2] = 2
-                elif (green_lower[0] <= h_med <= green_upper[0] and
+                if (green_lower[0] <= h_dom <= green_upper[0] and
                     green_lower[1] <= s_med <= green_upper[1] and
                     green_lower[2] <= v_med <= green_upper[2]):
                     image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 255, 0), 8)
                     cv2.drawContours(image_frame, [box], 0, (0, 255, 0), 2)
                     target[2] = 4
-                elif (blue_lower[0] <= h_med <= blue_upper[0] and
+                elif (white_lower[0] <= h_dom <= white_upper[0] and
+                    white_lower[1] <= s_med <= white_upper[1] and
+                    white_lower[2] <= v_med <= white_upper[2]):
+                    image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (255, 255, 255), 8)
+                    cv2.drawContours(image_frame, [box], 0, (255, 255, 255), 2)
+                    target[2] = 0
+                elif ((red_lower[0] <= h_dom <= red_upper[0] and
+                    red_lower[1] <= s_med <= red_upper[1] and
+                    red_lower[2] <= v_med <= red_upper[2]) or
+                    (red_lower_2[0] <= h_dom <= red_upper_2[0] and
+                    red_lower_2[1] <= s_med <= red_upper_2[1] and
+                    red_lower_2[2] <= v_med <= red_upper_2[2])):
+                    image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 0, 255), 8)
+                    cv2.drawContours(image_frame, [box], 0, (0, 0, 255), 2)
+                    target[2] = 2
+                elif (green_lower[0] <= h_dom <= green_upper[0] and
+                    green_lower[1] <= s_med <= green_upper[1] and
+                    green_lower[2] <= v_med <= green_upper[2]):
+                    image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 255, 0), 8)
+                    cv2.drawContours(image_frame, [box], 0, (0, 255, 0), 2)
+                    target[2] = 4
+                elif (blue_lower[0] <= h_dom <= blue_upper[0] and
                     blue_lower[1] <= s_med <= blue_upper[1] and
                     blue_lower[2] <= v_med <= blue_upper[2]):
                     image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (255, 0, 0), 8)
                     cv2.drawContours(image_frame, [box], 0, (255, 0, 0), 2)
                     target[2] = 1
-                elif (orange_lower[0] <= h_med <= orange_upper[0] and
+                elif (orange_lower[0] <= h_dom <= orange_upper[0] and
                     orange_lower[1] <= s_med <= orange_upper[1] and
                     orange_lower[2] <= v_med <= orange_upper[2]):
                     image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 122, 255), 8)
                     cv2.drawContours(image_frame, [box], 0, (0, 122, 255), 2)
                     target[2] = 5
-                elif (yellow_lower[0] <= h_med <= yellow_upper[0] and
+                elif (yellow_lower[0] <= h_dom <= yellow_upper[0] and
                     yellow_lower[1] <= s_med <= yellow_upper[1] and
                     yellow_lower[2] <= v_med <= yellow_upper[2]):
                     image_frame = cv2.circle(image_frame, [target[0], target[1]], 5, (0, 255, 255), 8)
@@ -642,13 +702,15 @@ def square_finder(image_frame, isConfigurable):
     #mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
     img_grey = cv2.cvtColor(image_frame, cv2.COLOR_BGR2GRAY)
-    equalized_image = cv2.equalizeHist(img_grey)
 
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    equalized_image = clahe.apply(img_grey)
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
     background = cv2.morphologyEx(equalized_image, cv2.MORPH_DILATE, kernel)
     shadow_removed = cv2.subtract(background, equalized_image)
 
-    blur = cv2.GaussianBlur(shadow_removed, (7, 7), 0)
+    blur = cv2.GaussianBlur(shadow_removed, (9, 9), 0)
     sharpened_image = cv2.addWeighted(shadow_removed, 2.0, blur, -0.5, 0)
 
     bilateral_filter = cv2.bilateralFilter(sharpened_image, 7, 50, 50)
@@ -656,10 +718,12 @@ def square_finder(image_frame, isConfigurable):
     median = np.median(bilateral_filter)
 
     lower = int(max(0, 0.66 * median))
-    upper = int(max(110, 1.33 * median))
+    upper = int(max(255, 1.33 * median))
     
     segmented_map = cv2.Canny(bilateral_filter, lower, upper)
     segmented_map = cv2.dilate(segmented_map, None, iterations=2)
+
+    cv2.imshow("segmented_map", segmented_map)
 
     contours, _ = cv2.findContours(segmented_map, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
