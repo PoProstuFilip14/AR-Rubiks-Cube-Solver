@@ -7,6 +7,83 @@ import csv
 import os
 from collections import Counter
 
+def parse_solution(solution_str):
+    return solution_str.split()
+
+move_descriptions = {
+    'U': "Obroc biala sciane o 90 stopni zgodnie z ruchem wskazowek zegara",
+    "U'": "Obroc biala sciane o 90 stopni przeciwnie do ruchu wskazowek zegara",
+    'U2': "Obroc biala sciane o 180 stopni",
+
+    'D': "Obroc zolta sciane o 90 stopni zgodnie z ruchem wskazowek zegara",
+    "D'": "Obroc zolta sciane o 90 stopni przeciwnie do ruchu wskazowek zegara",
+    'D2': "Obroc zolta sciane o 180 stopni",
+
+    'L': "Obroc pomaranczowa sciane o 90 stopni zgodnie z ruchem wskazowek zegara",
+    "L'": "Obroc pomaranczowa sciane o 90 stopni przeciwnie do ruchu wskazowek zegara",
+    'L2': "Obroc pomaranczowa sciane o 180 stopni",
+
+    'R': "Obroc czerwona sciane o 90 stopni zgodnie z ruchem wskazowek zegara",
+    "R'": "Obroc czerwona sciane o 90 stopni przeciwnie do ruchu wskazowek zegara",
+    'R2': "Obroc czerwona sciane o 180 stopni",
+
+    'F': "Obroc zielona sciane o 90 stopni zgodnie z ruchem wskazowek zegara",
+    "F'": "Obroc zielona sciane o 90 stopni przeciwnie do ruchu wskazowek zegara",
+    'F2': "Obroc zielona sciane o 180 stopni",
+
+    'B': "Obroc niebieska sciane o 90 stopni zgodnie z ruchem wskazowek zegara",
+    "B'": "Obroc niebieska sciane o 90 stopni przeciwnie do ruchu wskazowek zegara",
+    'B2': "Obroc niebieska sciane o 180 stopni",
+}
+
+move_colors = {
+    'U': (255, 255, 255),   # biały
+    'D': (0, 255, 255),     # żółty
+    'L': (0, 165, 255),     # pomarańczowy
+    'R': (0, 0, 255),       # czerwony
+    'F': (0, 255, 0),       # zielony
+    'B': (255, 0, 0),       # niebieski
+}
+
+def show_solution_steps(solution):
+    steps = parse_solution(solution)
+    step_index = 0
+
+    while step_index < len(steps):
+        frame = np.zeros((300, 800, 3), dtype=np.uint8)
+
+        move = steps[step_index]
+        base_move = move[0]
+
+        color = move_colors.get(base_move, (200, 200, 200))
+        description = move_descriptions.get(move, "Nieznany ruch")
+
+        # Tekst główny (notacja)
+        cv2.putText(frame, f"Krok {step_index+1}/{len(steps)}: {move}",
+                    (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.2, color, 2)
+
+        # Opis po polsku
+        cv2.putText(frame, description,
+                    (50, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+        # Obsługa
+        cv2.putText(frame, "N - nastepny krok | B - poprzedni krok | Q - wyjscie",
+                    (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (150, 150, 150), 1)
+
+        cv2.imshow("Instrukcja rozwiazania", frame)
+
+        key = cv2.waitKey(0) & 0xFF
+
+        if key == ord('n'):
+            step_index += 1
+        elif key == ord('b'):
+            if step_index > 0:
+                step_index -= 1
+        elif key == ord('q'):
+            break
+
+    cv2.destroyWindow("Instrukcja rozwiazania")
+
 results = [[[[] for _ in range(2)]] for _ in range(6)]
 stats = [
     ['Kolor', 'Correct-Color', 'Wrong-Color', 'Non-Color', 'All', 'Highest_H', 'Highest_S','Highest_V', 'Lowest_H', 'Lowest_S', 'Lowest_V', 'No-Square'],
@@ -674,6 +751,7 @@ def generate_solution():
     try:
         cube_solution = kociemba.solve(cube_string)
         print(cube_solution)
+        show_solution_steps(cube_solution)
     except:
         print("Invalid cube!!!")
 
