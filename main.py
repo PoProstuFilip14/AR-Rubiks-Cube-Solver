@@ -801,7 +801,7 @@ def square_finder(image_frame, isConfigurable):
     segmented_map = cv2.Canny(bilateral_filter, lower, upper)
     segmented_map = cv2.dilate(segmented_map, None, iterations=2)
 
-    cv2.imshow("segmented_map", segmented_map)
+    #cv2.imshow("segmented_map", segmented_map)
 
     contours, _ = cv2.findContours(segmented_map, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -849,13 +849,13 @@ def nothing(x):
 def cube_solver():
     global cube, middle, gap, targets, is_recognized
 
-    cv2.namedWindow("Trackbars")
-    cv2.createTrackbar("L-H", "Trackbars", 0, 179, nothing)
-    cv2.createTrackbar("L-S", "Trackbars", 0, 255, nothing)
-    cv2.createTrackbar("L-V", "Trackbars", 0, 255, nothing)
-    cv2.createTrackbar("H-H", "Trackbars", 179, 179, nothing)
-    cv2.createTrackbar("H-S", "Trackbars", 255, 255, nothing)
-    cv2.createTrackbar("H-V", "Trackbars", 115, 255, nothing)
+    #cv2.namedWindow("Trackbars")
+    #cv2.createTrackbar("L-H", "Trackbars", 0, 179, nothing)
+    #cv2.createTrackbar("L-S", "Trackbars", 0, 255, nothing)
+    #cv2.createTrackbar("L-V", "Trackbars", 0, 255, nothing)
+    #cv2.createTrackbar("H-H", "Trackbars", 179, 179, nothing)
+    #cv2.createTrackbar("H-S", "Trackbars", 255, 255, nothing)
+    #cv2.createTrackbar("H-V", "Trackbars", 115, 255, nothing)
 
     is_saved = [False] * 6
     last_wall = None
