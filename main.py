@@ -19,30 +19,30 @@ move_descriptions = {
     "D'": "Obroc zolta sciane o 90 stopni przeciwnie do ruchu wskazowek zegara",
     'D2': "Obroc zolta sciane o 180 stopni",
 
-    'L': "Obroc pomaranczowa sciane o 90 stopni zgodnie z ruchem wskazowek zegara",
-    "L'": "Obroc pomaranczowa sciane o 90 stopni przeciwnie do ruchu wskazowek zegara",
-    'L2': "Obroc pomaranczowa sciane o 180 stopni",
+    'L': "Obroc zielona sciane o 90 stopni zgodnie z ruchem wskazowek zegara",
+    "L'": "Obroc zielona sciane o 90 stopni przeciwnie do ruchu wskazowek zegara",
+    'L2': "Obroc zielona sciane o 180 stopni",
 
-    'R': "Obroc czerwona sciane o 90 stopni zgodnie z ruchem wskazowek zegara",
-    "R'": "Obroc czerwona sciane o 90 stopni przeciwnie do ruchu wskazowek zegara",
-    'R2': "Obroc czerwona sciane o 180 stopni",
+    'R': "Obroc niebieska sciane o 90 stopni zgodnie z ruchem wskazowek zegara",
+    "R'": "Obroc niebieska sciane o 90 stopni przeciwnie do ruchu wskazowek zegara",
+    'R2': "Obroc niebieska sciane o 180 stopni",
 
-    'F': "Obroc zielona sciane o 90 stopni zgodnie z ruchem wskazowek zegara",
-    "F'": "Obroc zielona sciane o 90 stopni przeciwnie do ruchu wskazowek zegara",
-    'F2': "Obroc zielona sciane o 180 stopni",
+    'F': "Obroc czerwona sciane o 90 stopni zgodnie z ruchem wskazowek zegara",
+    "F'": "Obroc czerwona sciane o 90 stopni przeciwnie do ruchu wskazowek zegara",
+    'F2': "Obroc czerwona sciane o 180 stopni",
 
-    'B': "Obroc niebieska sciane o 90 stopni zgodnie z ruchem wskazowek zegara",
-    "B'": "Obroc niebieska sciane o 90 stopni przeciwnie do ruchu wskazowek zegara",
-    'B2': "Obroc niebieska sciane o 180 stopni",
+    'B': "Obroc pomaranczowa sciane o 90 stopni zgodnie z ruchem wskazowek zegara",
+    "B'": "Obroc pomaranczowa sciane o 90 stopni przeciwnie do ruchu wskazowek zegara",
+    'B2': "Obroc pomaranczowa sciane o 180 stopni",
 }
 
 move_colors = {
     'U': (255, 255, 255),   # biały
     'D': (0, 255, 255),     # żółty
-    'L': (0, 165, 255),     # pomarańczowy
-    'R': (0, 0, 255),       # czerwony
-    'F': (0, 255, 0),       # zielony
-    'B': (255, 0, 0),       # niebieski
+    'L': (0, 255, 0),     # zielony
+    'R': (255, 0, 0),       # niebieski
+    'F': (0, 0, 255),       # czerwony
+    'B': (0, 165, 255),       # pomarańczowy
 }
 
 def show_solution_steps(solution):
