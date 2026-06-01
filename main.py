@@ -5,10 +5,16 @@ import kociemba
 import datetime
 import csv
 import os
+import time
 from collections import Counter
 
 def parse_solution(solution_str):
     return solution_str.split()
+
+max_fps = -1
+min_fps = float("inf")
+average_fps = -1
+frames_count = 0
 
 move_descriptions = {
     'U': "Obroc biala sciane o 90 stopni zgodnie z ruchem wskazowek zegara",
@@ -86,7 +92,7 @@ def show_solution_steps(solution):
 
 results = [[[[] for _ in range(2)]] for _ in range(6)]
 stats = [
-    ['Kolor', 'Correct-Color', 'Wrong-Color', 'Non-Color', 'All', 'Highest_H', 'Highest_S','Highest_V', 'Lowest_H', 'Lowest_S', 'Lowest_V', 'No-Square'],
+    ['Kolor', 'True-Positive', 'False-Negative', 'False-Positive', 'All', 'Highest_H', 'Highest_S','Highest_V', 'Lowest_H', 'Lowest_S', 'Lowest_V', 'No-Square'],
     ['White', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256, 0],
     ['Blue', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256, 0],
     ['Red', 0, 0, 0, 0, -1, -1, -1, 256, 256, 256, 0],
@@ -188,7 +194,7 @@ def take_photos():
 def test_photos():
     global targets
 
-    directory = 'temp_photos'
+    directory = 'photos'
 
     counter = 0
     wall_counter = 0
@@ -320,6 +326,8 @@ def test_photos():
                     box = cv2.boxPoints(rect)
                     box = box.astype(int)
 
+                    is_correct = False
+
                     if x <= target[0] <= x + w and y <= target[1] <= y + h:
                         is_square = True
                         if (white_lower[0] <= h_dom <= white_upper[0] and
@@ -370,10 +378,11 @@ def test_photos():
                                 print("Poprawny odczyt: " + str(hsv_med))
                                 results[0].append([True, hsv_med])
                                 stats[1][1] += 1
+                                is_correct = True
                             elif detected_color == 'n':
                                 print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
                                 results[0].append([False, hsv_med])
-                                stats[1][3] += 1
+                                stats[1][2] += 1
                             else:
                                 print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
                                 results[0].append([False, hsv_med])
@@ -397,10 +406,11 @@ def test_photos():
                                 print("Poprawny odczyt: " + str(hsv_med))
                                 results[0].append([True, hsv_med])
                                 stats[2][1] += 1
+                                is_correct = True
                             elif detected_color == 'n':
                                 print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
                                 results[0].append([False, hsv_med])
-                                stats[2][3] += 1
+                                stats[2][2] += 1
                             else:
                                 print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
                                 results[0].append([False, hsv_med])
@@ -424,10 +434,11 @@ def test_photos():
                                 print("Poprawny odczyt: " + str(hsv_med))
                                 results[0].append([True, hsv_med])
                                 stats[3][1] += 1
+                                is_correct = True
                             elif detected_color == 'n':
                                 print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
                                 results[0].append([False, hsv_med])
-                                stats[3][3] += 1
+                                stats[3][2] += 1
                             else:
                                 print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
                                 results[0].append([False, hsv_med])
@@ -451,10 +462,11 @@ def test_photos():
                                 print("Poprawny odczyt: " + str(hsv_med))
                                 results[0].append([True, hsv_med])
                                 stats[4][1] += 1
+                                is_correct = True
                             elif detected_color == 'n':
                                 print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
                                 results[0].append([False, hsv_med])
-                                stats[4][3] += 1
+                                stats[4][2] += 1
                             else:
                                 print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
                                 results[0].append([False, hsv_med])
@@ -478,10 +490,11 @@ def test_photos():
                                 print("Poprawny odczyt: " + str(hsv_med))
                                 results[0].append([True, hsv_med])
                                 stats[5][1] += 1
+                                is_correct = True
                             elif detected_color == 'n':
                                 print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
                                 results[0].append([False, hsv_med])
-                                stats[5][3] += 1
+                                stats[5][2] += 1
                             else:
                                 print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
                                 results[0].append([False, hsv_med])
@@ -505,10 +518,11 @@ def test_photos():
                                 print("Poprawny odczyt: " + str(hsv_med))
                                 results[0].append([True, hsv_med])
                                 stats[6][1] += 1
+                                is_correct = True
                             elif detected_color == 'n':
                                 print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
                                 results[0].append([False, hsv_med])
-                                stats[6][3] += 1
+                                stats[6][2] += 1
                             else:
                                 print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
                                 results[0].append([False, hsv_med])
@@ -531,39 +545,55 @@ def test_photos():
                             if detected_color == 'n':
                                 print("Poprawny odczyt: " + str(hsv_med))
                                 results[0].append([True, hsv_med])
-                                stats[7][3] += 1
+                                stats[7][1] += 1
+                                is_correct = True
                             else:
                                 print("Nieoprawny odczyt: " + str(hsv_med) + " " + str(detected_color))
                                 results[5].append([False, hsv_med])
                                 stats[7][2] += 1
+                        if not is_correct:
+                            if detected_color == 'w':
+                                stats[1][3] += 1
+                            if detected_color == 'b':
+                                stats[2][3] += 1
+                            if detected_color == 'r':
+                                stats[3][3] += 1
+                            if detected_color == 'y':
+                                stats[4][3] += 1
+                            if detected_color == 'g':
+                                stats[5][3] += 1
+                            if detected_color == 'o':
+                                stats[6][3] += 1
+                            else:
+                                stats[7][3] += 1
                 if not is_square:
                     if key == ord('w'):
                         stats[1][4] += 1
-                        stats[1][3] += 1
+                        stats[1][2] += 1
                         stats[1][11] += 1
                     elif key == ord('b'):
                         stats[2][4] += 1
-                        stats[2][3] += 1
+                        stats[2][2] += 1
                         stats[2][11] += 1
                     elif key == ord('r'):
                         stats[3][4] += 1
-                        stats[3][3] += 1
+                        stats[3][2] += 1
                         stats[3][11] += 1
                     elif key == ord('y'):
                         stats[4][4] += 1
-                        stats[4][3] += 1
+                        stats[4][2] += 1
                         stats[4][11] += 1
                     elif key == ord('g'):
                         stats[5][4] += 1
-                        stats[5][3] += 1
+                        stats[5][2] += 1
                         stats[5][11] += 1
                     elif key == ord('o'):
                         stats[6][4] += 1
-                        stats[6][3] += 1
+                        stats[6][2] += 1
                         stats[6][11] += 1
                     else:
                         stats[7][4] += 1
-                        stats[7][2] += 1
+                        stats[7][1] += 1
                         stats[7][11] += 1
 
     cv2.destroyAllWindows()
@@ -847,7 +877,7 @@ def nothing(x):
     pass
 
 def cube_solver():
-    global cube, middle, gap, targets, is_recognized
+    global cube, middle, gap, targets, is_recognized, frames_count, max_fps, min_fps, average_fps
 
     #cv2.namedWindow("Trackbars")
     #cv2.createTrackbar("L-H", "Trackbars", 0, 179, nothing)
@@ -864,7 +894,22 @@ def cube_solver():
 
     webcam = cv2.VideoCapture(0)
 
+    start_time = time.time()
+    prev_frame_time = 0
+
     while wall_counter < 6:
+        frames_count += 1
+
+        new_frame_time = time.time()
+        fps = 1 / (new_frame_time - prev_frame_time)
+        prev_frame_time = new_frame_time
+
+        if max_fps < fps or max_fps < 0:
+            max_fps = fps
+
+        if min_fps > fps or min_fps < 0:
+            min_fps = fps
+
         ret, image_frame = webcam.read()
         if ret:
             middle = [int(image_frame.shape[1] / 2), int(image_frame.shape[0] / 2)]
@@ -911,11 +956,19 @@ def cube_solver():
 
         else:
             print("Image reading error!!!")
+            return
 
         if cv2.waitKey(10) & 0xFF == ord('q'):
             webcam.release()
             cv2.destroyAllWindows()
             break
+
+    end_time = time.time()
+    average_fps = frames_count / (end_time - start_time)
+
+    print("Max fps: " + str(max_fps))
+    print("Min fps: " + str(min_fps))
+    print("Average fps: " + str(average_fps))
 
     generate_solution()
     webcam.release()
